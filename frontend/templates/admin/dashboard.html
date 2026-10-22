@@ -1,0 +1,141 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Admin Dashboard — PG Finder Bengaluru{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div>
+    <h2 class="fw-bold mb-1">Bengaluru Platform Administration</h2>
+    <span class="text-secondary small">Listing approvals, user verifications, review moderation, and platform safety monitoring.</span>
+  </div>
+  <div>
+    <a href="{{ url_for('admin.listings_queue') }}" class="btn btn-danger rounded-pill px-4 fw-bold">
+      <i class="bi bi-clock-history me-1"></i> Review Queue ({{ pending_properties }})
+    </a>
+  </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon primary"><i class="bi bi-people"></i></div>
+      <div>
+        <div class="stat-number">{{ total_users }}</div>
+        <div class="stat-label">Total Users ({{ total_customers }}C / {{ total_owners }}O)</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon amber"><i class="bi bi-hourglass-split"></i></div>
+      <div>
+        <div class="stat-number">{{ pending_properties }}</div>
+        <div class="stat-label">Pending Approvals</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon emerald"><i class="bi bi-buildings"></i></div>
+      <div>
+        <div class="stat-number">{{ approved_properties }}</div>
+        <div class="stat-label">Live Listings</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon rose"><i class="bi bi-flag"></i></div>
+      <div>
+        <div class="stat-number">{{ open_complaints }}</div>
+        <div class="stat-label">Open Complaints</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Recent Properties Added -->
+  <div class="col-lg-7">
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Recent Property Submissions</h5>
+        <a href="{{ url_for('admin.listings_queue') }}" class="small fw-bold text-primary">View All</a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead class="bg-light">
+            <tr>
+              <th>Property</th>
+              <th>Owner</th>
+              <th>Locality</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for prop in recent_properties %}
+              <tr>
+                <td>
+                  <strong class="text-dark d-block">{{ prop.name }}</strong>
+                  <span class="small text-muted">{{ prop.gender_policy | capitalize }}</span>
+                </td>
+                <td>{{ prop.owner.name }}</td>
+                <td>{{ prop.locality }}</td>
+                <td>
+                  <span class="status-pill status-{{ prop.status }}">{{ prop.status | replace('_', ' ') | capitalize }}</span>
+                </td>
+                <td>
+                  <a href="{{ url_for('customer.property_detail', slug=prop.slug) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3" target="_blank">
+                    Inspect
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quality & Alerts Summary -->
+  <div class="col-lg-5">
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-4">
+      <h5 class="fw-bold mb-3">Moderation Actions Needed</h5>
+      <div class="d-flex flex-column gap-3">
+        <div class="p-3 rounded-3 bg-light border d-flex justify-content-between align-items-center">
+          <div>
+            <strong class="text-dark d-block">Pending Listing Approvals</strong>
+            <span class="small text-muted">New PG properties waiting for review</span>
+          </div>
+          <a href="{{ url_for('admin.listings_queue', status='pending_approval') }}" class="btn btn-sm btn-outline-primary rounded-pill">
+            {{ pending_properties }} Pending
+          </a>
+        </div>
+
+        <div class="p-3 rounded-3 bg-light border d-flex justify-content-between align-items-center">
+          <div>
+            <strong class="text-dark d-block">Pending Customer Reviews</strong>
+            <span class="small text-muted">Check against spam or fake reviews</span>
+          </div>
+          <a href="{{ url_for('admin.reviews') }}" class="btn btn-sm btn-outline-warning text-dark rounded-pill">
+            {{ pending_reviews }} Pending
+          </a>
+        </div>
+
+        <div class="p-3 rounded-3 bg-light border d-flex justify-content-between align-items-center">
+          <div>
+            <strong class="text-dark d-block">Stale Availability Listings</strong>
+            <span class="small text-muted">No owner update in > 7 days</span>
+          </div>
+          <a href="{{ url_for('admin.stale_alerts') }}" class="btn btn-sm btn-outline-danger rounded-pill">
+            {{ stale_count }} Overdue
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

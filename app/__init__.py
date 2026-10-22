@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -10,7 +11,28 @@ csrf = CSRFProtect()
 
 
 def create_app(config_class=Config):
-    app = Flask(__name__)
+    curr_dir = os.path.abspath(os.path.dirname(__file__))
+    candidates_templates = [
+        os.path.abspath(os.path.join(curr_dir, '..', '..', 'frontend', 'templates')),
+        os.path.abspath(os.path.join(curr_dir, '..', 'frontend', 'templates')),
+        os.path.join(curr_dir, 'templates'),
+    ]
+    template_folder = next((p for p in candidates_templates if os.path.isdir(p)), None)
+
+    candidates_static = [
+        os.path.abspath(os.path.join(curr_dir, '..', '..', 'frontend', 'static')),
+        os.path.abspath(os.path.join(curr_dir, '..', 'frontend', 'static')),
+        os.path.join(curr_dir, 'static'),
+    ]
+    static_folder = next((p for p in candidates_static if os.path.isdir(p)), None)
+
+    kwargs = {}
+    if template_folder:
+        kwargs['template_folder'] = template_folder
+    if static_folder:
+        kwargs['static_folder'] = static_folder
+
+    app = Flask(__name__, **kwargs)
     app.config.from_object(config_class)
 
     # Initialize extensions

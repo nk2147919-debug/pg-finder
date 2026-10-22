@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ property.name }} Community Board | PG Finder Bengaluru{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Community Banner -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden" style="background: linear-gradient(135deg, #065f46 0%, #047857 50%, #059669 100%);">
+    <div class="card-body p-4 p-md-5 text-white">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+          <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-white bg-opacity-20 text-white small mb-2">
+            <i class="bi bi-shield-lock-fill"></i> Private Resident Board • Verified Access
+          </div>
+          <h1 class="display-6 fw-bold mb-1">{{ property.name }} Community</h1>
+          <p class="text-white text-opacity-80 mb-0">
+            <i class="bi bi-geo-alt"></i> {{ property.locality }}, Bengaluru • Exclusively for verified residents and PG management.
+          </p>
+        </div>
+        <div>
+          <button class="btn btn-warning rounded-pill fw-bold px-4 py-2" data-bs-toggle="modal" data-bs-target="#newPostModal">
+            <i class="bi bi-pencil-square me-1"></i> New Discussion / Notice
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Filter Pills -->
+  <div class="d-flex flex-wrap gap-2 mb-4">
+    <a href="{{ url_for('customer.pg_community_board', property_id=property.id) }}" class="btn btn-sm rounded-pill px-3 {% if not active_category %}btn-dark{% else %}btn-outline-secondary{% endif %}">
+      All Posts
+    </a>
+    <a href="{{ url_for('customer.pg_community_board', property_id=property.id, category='announcement') }}" class="btn btn-sm rounded-pill px-3 {% if active_category == 'announcement' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+      📢 Announcements
+    </a>
+    <a href="{{ url_for('customer.pg_community_board', property_id=property.id, category='maintenance') }}" class="btn btn-sm rounded-pill px-3 {% if active_category == 'maintenance' %}btn-warning text-dark{% else %}btn-outline-warning text-dark{% endif %}">
+      🔧 Maintenance
+    </a>
+    <a href="{{ url_for('customer.pg_community_board', property_id=property.id, category='question') }}" class="btn btn-sm rounded-pill px-3 {% if active_category == 'question' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+      ❓ Help & Questions
+    </a>
+    <a href="{{ url_for('customer.pg_community_board', property_id=property.id, category='general') }}" class="btn btn-sm rounded-pill px-3 {% if active_category == 'general' %}btn-info text-dark{% else %}btn-outline-info text-dark{% endif %}">
+      💬 General
+    </a>
+    <a href="{{ url_for('customer.pg_community_board', property_id=property.id, category='event') }}" class="btn btn-sm rounded-pill px-3 {% if active_category == 'event' %}btn-success{% else %}btn-outline-success{% endif %}">
+      🎉 Events
+    </a>
+  </div>
+
+  <!-- Posts Feed -->
+  <div class="row">
+    <div class="col-lg-8">
+      {% if not posts %}
+        <div class="card border-0 shadow-sm rounded-4 p-5 text-center">
+          <i class="bi bi-chat-dots text-muted display-3 mb-3"></i>
+          <h4>No Posts in this Category</h4>
+          <p class="text-muted">Start the conversation! Post an announcement, question, or tips for fellow residents.</p>
+          <div>
+            <button class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#newPostModal">
+              Create First Post
+            </button>
+          </div>
+        </div>
+      {% else %}
+        {% for post in posts %}
+          <div class="card border-0 shadow-sm rounded-4 mb-4 {% if post.is_pinned %}border-top border-4 border-warning{% endif %}">
+            <div class="card-body p-4">
+              <!-- Post Meta -->
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="rounded-circle {% if post.author_is_owner %}bg-warning text-dark{% else %}bg-primary text-white{% endif %} d-flex align-items-center justify-content-center fw-bold" style="width: 38px; height: 38px;">
+                    {{ post.author.name[:1] if post.author else 'R' }}
+                  </div>
+                  <div>
+                    <h6 class="mb-0 fw-bold">
+                      {{ post.author.name if post.author else 'Resident' }}
+                      {% if post.author_is_owner %}
+                        <span class="badge bg-warning text-dark rounded-pill ms-1" style="font-size: 10px;">PG Owner</span>
+                      {% endif %}
+                    </h6>
+                    <small class="text-muted">{{ post.created_at.strftime('%d %b %Y, %I:%M %p') if post.created_at else '' }}</small>
+                  </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-1">
+                  {% if post.is_pinned %}
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 small">
+                      <i class="bi bi-pin-angle-fill me-1"></i> Pinned
+                    </span>
+                  {% endif %}
+
+                  <span class="badge bg-light text-dark border rounded-pill px-2 py-1 small">
+                    {{ post.post_type|capitalize }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Post Title & Body -->
+              <h5 class="fw-bold text-dark mt-2 mb-2">{{ post.title }}</h5>
+              <p class="text-secondary mb-3" style="white-space: pre-line;">{{ post.content }}</p>
+
+              <!-- Actions & Report/Delete -->
+              <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                <span class="small text-muted">
+                  <i class="bi bi-chat-square-text me-1"></i> {{ post.comments|length }} Replies
+                </span>
+
+                <div class="d-flex gap-2">
+                  {% if current_user.id == post.user_id or current_user.id == property.owner_id or current_user.is_admin %}
+                    <form action="{{ url_for('customer.delete_community_post_route', post_id=post.id) }}" method="POST" onsubmit="return confirm('Delete this post?');" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-link btn-sm text-danger p-0 text-decoration-none">
+                        <i class="bi bi-trash me-1"></i> Delete
+                      </button>
+                    </form>
+                  {% endif %}
+
+                  <button class="btn btn-link btn-sm text-muted p-0 text-decoration-none ms-2" data-bs-toggle="modal" data-bs-target="#reportPostModal{{ post.id }}">
+                    <i class="bi bi-flag me-1"></i> Report
+                  </button>
+                </div>
+              </div>
+
+              <!-- Comment Section -->
+              <div class="mt-3 pt-3 bg-light rounded-3 p-3">
+                {% if post.comments %}
+                  <div class="mb-3">
+                    {% for c in post.comments %}
+                      {% if not c.is_deleted %}
+                        <div class="d-flex gap-2 mb-2 pb-2 border-bottom">
+                          <div class="rounded-circle {% if c.author_is_owner %}bg-warning text-dark{% else %}bg-secondary text-white{% endif %} d-flex align-items-center justify-content-center fw-bold" style="width: 28px; height: 28px; font-size: 11px;">
+                            {{ c.author.name[:1] if c.author else 'R' }}
+                          </div>
+                          <div class="flex-fill">
+                            <div class="d-flex justify-content-between align-items-baseline">
+                              <strong class="small text-dark">
+                                {{ c.author.name if c.author else 'Resident' }}
+                                {% if c.author_is_owner %}<span class="badge bg-warning text-dark ms-1" style="font-size: 9px;">Owner</span>{% endif %}
+                              </strong>
+                              <small class="text-muted" style="font-size: 11px;">{{ c.created_at.strftime('%d %b, %I:%M %p') }}</small>
+                            </div>
+                            <div class="small text-secondary">{{ c.content }}</div>
+                          </div>
+                        </div>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                {% endif %}
+
+                <!-- Add Comment Form -->
+                <form action="{{ url_for('customer.add_community_comment', post_id=post.id) }}" method="POST" class="d-flex gap-2">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="text" name="content" class="form-control form-control-sm rounded-pill" placeholder="Write a reply..." required>
+                  <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3">Reply</button>
+                </form>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Report Post Modal -->
+          <div class="modal fade" id="reportPostModal{{ post.id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content rounded-4 border-0">
+                <div class="modal-header border-0">
+                  <h5 class="modal-title fw-bold text-danger"><i class="bi bi-flag me-1"></i> Report Community Post</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ url_for('customer.report_community_post_route', post_id=post.id) }}" method="POST">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <div class="modal-body">
+                    <div class="mb-3">
+                      <label class="form-label fw-semibold">Reason</label>
+                      <select name="reason" class="form-select rounded-pill">
+                        <option value="spam">Spam or Advertisement</option>
+                        <option value="harassment">Harassment or Offensive Behavior</option>
+                        <option value="inappropriate">Inappropriate Content</option>
+                        <option value="misleading">False / Misleading Information</option>
+                        <option value="other">Other Violation</option>
+                      </select>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label fw-semibold">Details</label>
+                      <textarea name="details" class="form-control rounded-3" rows="3" placeholder="Provide extra details for moderators..."></textarea>
+                    </div>
+                  </div>
+                  <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger rounded-pill px-4">Submit Report</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+        {% endfor %}
+      {% endif %}
+    </div>
+
+    <!-- Sidebar Info -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-info-circle text-primary me-2"></i> PG Community Guidelines</h5>
+        <ul class="list-unstyled small text-secondary mb-0">
+          <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> <strong>Respect Curfew & Noise:</strong> Keep notices constructive and respect house quiet hours.</li>
+          <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> <strong>Report Utilities Early:</strong> Post water, Wi-Fi, or electricity alerts so fellow residents are informed.</li>
+          <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> <strong>Zero Harassment:</strong> Offensive behavior leads to immediate post removal and resident account review.</li>
+        </ul>
+      </div>
+
+      <div class="card border-0 shadow-sm rounded-4 p-4">
+        <h6 class="fw-bold mb-2">Need Roommates in This PG?</h6>
+        <p class="small text-muted mb-3">Check out compatible roommates looking to share rooms in Bengaluru.</p>
+        <a href="{{ url_for('customer.roommates') }}" class="btn btn-outline-primary rounded-pill w-100 btn-sm fw-semibold">
+          <i class="bi bi-people me-1"></i> Browse Roommates
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Post Modal -->
+<div class="modal fade" id="newPostModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content rounded-4 border-0">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2 text-primary"></i> Create Community Post</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{{ url_for('customer.create_community_post', property_id=property.id) }}" method="POST">
+        {{ post_form.hidden_tag() }}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Post Title</label>
+            {{ post_form.title(class="form-control rounded-pill", placeholder="e.g. Wi-Fi router reboot schedule on 2nd floor") }}
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Category</label>
+              {{ post_form.post_type(class="form-select rounded-pill") }}
+            </div>
+            {% if current_user.id == property.owner_id or current_user.is_admin %}
+              <div class="col-md-6 d-flex align-items-center mt-3 mt-md-0">
+                <div class="form-check form-switch mt-3">
+                  {{ post_form.is_pinned(class="form-check-input", id="pinCheck") }}
+                  <label class="form-check-label fw-semibold" for="pinCheck">Pin to Top (Owner Notice)</label>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Content</label>
+            {{ post_form.content(class="form-control rounded-3", rows="5", placeholder="Write details here...") }}
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Publish to PG</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,397 @@
+{% extends 'base.html' %}
+
+{% block title %}Booking Receipt {{ booking.booking_code }} — PG Finder{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Top Navigation / Back -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <a href="{{ url_for('customer.dashboard') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+      <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+    </a>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('customer.download_short_stay_receipt_pdf', booking_code=booking.booking_code) }}" class="btn btn-danger btn-sm rounded-pill px-3 shadow-xs">
+        <i class="bi bi-file-earmark-pdf-fill me-1"></i> Download PDF Receipt
+      </a>
+      <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="window.print()">
+        <i class="bi bi-printer me-1"></i> Print Receipt / Invoice
+      </button>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Main Receipt Document (Col-lg-8) -->
+    <div class="col-lg-8">
+      <div class="card border-0 rounded-4 shadow-sm bg-white p-4 p-md-5" id="printableReceipt">
+        <!-- Receipt Header -->
+        <div class="d-flex flex-wrap justify-content-between align-items-start border-bottom pb-4 mb-4 gap-3">
+          <div>
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <div class="brand-icon-badge" style="width:36px; height:36px; font-size:1.1rem; background:linear-gradient(135deg, #0284c7, #0d9488);">
+                <i class="bi bi-buildings"></i>
+              </div>
+              <h4 class="fw-bold mb-0">PG Finder Bengaluru</h4>
+            </div>
+            <p class="text-secondary small mb-0">Official Short-Stay Booking Confirmation & Tax Invoice</p>
+            <div class="small text-muted">Booking Reference: <strong class="text-dark">{{ booking.booking_code }}</strong></div>
+            <div class="small text-muted">Issued: {{ booking.created_at.strftime('%d %b %Y, %I:%M %p') }}</div>
+          </div>
+
+          <div class="text-md-end">
+            <!-- Status Badges -->
+            <div class="mb-2">
+              <span class="status-pill status-{{ booking.status }} fs-7">
+                Status: {{ booking.status | capitalize }}
+              </span>
+            </div>
+            <div>
+              {% if booking.payment_status == 'paid' %}
+                <span class="badge bg-success px-3 py-2 rounded-pill fs-7">
+                  <i class="bi bi-check-circle-fill me-1"></i> Payment: Paid in Full
+                </span>
+              {% elif booking.payment_status == 'advance_paid' %}
+                <span class="badge bg-info text-dark px-3 py-2 rounded-pill fs-7">
+                  <i class="bi bi-shield-check me-1"></i> Advance Confirmed
+                </span>
+              {% elif booking.payment_status == 'refunded' %}
+                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fs-7">
+                  <i class="bi bi-arrow-counterclockwise me-1"></i> Refunded
+                </span>
+              {% else %}
+                <span class="badge bg-danger-subtle text-danger px-3 py-2 rounded-pill fs-7">
+                  <i class="bi bi-exclamation-circle me-1"></i> Payment: Pending
+                </span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Property & Stay Overview -->
+        <div class="row g-4 mb-4">
+          <div class="col-md-6">
+            <h6 class="text-muted text-uppercase fs-8 fw-bold letter-spacing-1 mb-2">Property Details</h6>
+            <h5 class="fw-bold mb-1">
+              <a href="{{ url_for('customer.property_detail', slug=booking.property.slug) }}" class="text-dark text-decoration-none">
+                {{ booking.property.name }}
+              </a>
+            </h5>
+            <p class="text-secondary small mb-1">
+              <i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ booking.property.address }}, {{ booking.property.locality }}, Bengaluru
+            </p>
+            <div class="small text-muted">
+              <strong>Owner:</strong> {{ booking.property.owner.name }} • 
+              <i class="bi bi-telephone-fill text-primary ms-1"></i> {{ booking.property.owner.phone }}
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <h6 class="text-muted text-uppercase fs-8 fw-bold letter-spacing-1 mb-2">Check-in & Check-out</h6>
+            <div class="bg-light p-3 rounded-3 small">
+              <div class="d-flex justify-content-between mb-1">
+                <span>Check-in:</span>
+                <strong>{{ booking.check_in_date.strftime('%a, %d %b %Y') }} (from {{ booking.property.short_stay_config.check_in_time if booking.property.short_stay_config else '12:00 PM' }})</strong>
+              </div>
+              <div class="d-flex justify-content-between mb-1">
+                <span>Check-out:</span>
+                <strong>{{ booking.check_out_date.strftime('%a, %d %b %Y') }} (by {{ booking.property.short_stay_config.check_out_time if booking.property.short_stay_config else '11:00 AM' }})</strong>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span>Total Stay Duration:</span>
+                <strong class="text-primary">{{ booking.total_nights }} Night(s)</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Guest Details -->
+        <div class="mb-4">
+          <h6 class="text-muted text-uppercase fs-8 fw-bold letter-spacing-1 mb-2">Guest / Resident Information</h6>
+          <div class="border rounded-3 p-3">
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <span class="text-secondary small d-block">Primary Contact Name</span>
+                <strong class="text-dark">{{ booking.customer.name }}</strong>
+                <div class="text-muted small">{{ booking.customer.phone }} • {{ booking.customer.email }}</div>
+              </div>
+              <div class="col-sm-6">
+                <span class="text-secondary small d-block">Total Guests</span>
+                <strong class="text-dark"><i class="bi bi-people-fill text-primary me-1"></i> {{ booking.num_guests }} Guest(s)</strong>
+              </div>
+            </div>
+
+            {% if booking.guests %}
+              <div class="mt-3 pt-3 border-top">
+                <div class="small fw-bold text-secondary mb-2">Registered Guest Names:</div>
+                <div class="d-flex flex-wrap gap-2">
+                  {% for g in booking.guests %}
+                    <span class="badge bg-light text-dark border px-3 py-2 rounded-pill small">
+                      <i class="bi bi-person me-1"></i> {{ g.full_name }} {% if g.id_proof_number %}(ID: {{ g.id_proof_number }}){% endif %}
+                    </span>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+
+            {% if booking.special_requests %}
+              <div class="mt-2 text-secondary small">
+                <strong>Special Requests:</strong> {{ booking.special_requests }}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Itemized Billing Table -->
+        <div class="mb-4">
+          <h6 class="text-muted text-uppercase fs-8 fw-bold letter-spacing-1 mb-2">Itemized Bill Breakdown</h6>
+          <div class="table-responsive">
+            <table class="table table-bordered mb-0">
+              <thead class="bg-light">
+                <tr>
+                  <th>Description</th>
+                  <th class="text-center">Rate / Details</th>
+                  <th class="text-end">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <strong>Base Accommodation Rent</strong>
+                    <div class="text-muted small">Standard stay for primary occupancy</div>
+                  </td>
+                  <td class="text-center small">{{ booking.total_nights }} Night(s) @ {{ booking.daily_rate | inr }}/night</td>
+                  <td class="text-end fw-bold">{{ (booking.daily_rate * booking.total_nights) | inr }}</td>
+                </tr>
+
+                {% if booking.extra_guest_charges > 0 %}
+                  <tr>
+                    <td>
+                      <strong>Additional Friends / Guest Charges</strong>
+                      <div class="text-muted small">{{ booking.num_guests - 1 }} additional guest(s)</div>
+                    </td>
+                    <td class="text-center small">{{ booking.num_guests - 1 }} guest(s) x {{ booking.total_nights }} nights</td>
+                    <td class="text-end fw-bold">{{ booking.extra_guest_charges | inr }}</td>
+                  </tr>
+                {% endif %}
+
+                {% if booking.discount_amount > 0 %}
+                  <tr class="text-success">
+                    <td>
+                      <strong>Stay Duration Discount</strong>
+                      <div class="small">Weekly / Extended stay concession</div>
+                    </td>
+                    <td class="text-center small">Discount applied</td>
+                    <td class="text-end fw-bold">-{{ booking.discount_amount | inr }}</td>
+                  </tr>
+                {% endif %}
+
+                {% if booking.cleaning_fee > 0 %}
+                  <tr>
+                    <td>
+                      <strong>Housekeeping & Sanitation Fee</strong>
+                      <div class="text-muted small">One-time deep clean before arrival</div>
+                    </td>
+                    <td class="text-center small">One-time</td>
+                    <td class="text-end fw-bold">{{ booking.cleaning_fee | inr }}</td>
+                  </tr>
+                {% endif %}
+
+                {% if booking.taxes > 0 %}
+                  <tr>
+                    <td>
+                      <strong>GST & Accommodation Taxes (12%)</strong>
+                      <div class="text-muted small">Statutory GST on short hospitality stay</div>
+                    </td>
+                    <td class="text-center small">12% GST</td>
+                    <td class="text-end fw-bold">{{ booking.taxes | inr }}</td>
+                  </tr>
+                {% endif %}
+
+                {% if booking.security_deposit > 0 %}
+                  <tr class="bg-light">
+                    <td>
+                      <strong>Refundable Security Deposit</strong>
+                      <div class="text-muted small">Refunded to original account upon key handover & checkout</div>
+                    </td>
+                    <td class="text-center small">100% Refundable</td>
+                    <td class="text-end fw-bold text-dark">{{ booking.security_deposit | inr }}</td>
+                  </tr>
+                {% endif %}
+              </tbody>
+              <tfoot class="bg-white">
+                <tr>
+                  <td colspan="2" class="text-end fw-bold fs-6">Grand Total Amount:</td>
+                  <td class="text-end fw-bold fs-5 text-primary">{{ booking.total_amount | inr }}</td>
+                </tr>
+                {% if booking.total_paid > 0 %}
+                  <tr class="text-success small">
+                    <td colspan="2" class="text-end fw-bold">Total Paid to Date:</td>
+                    <td class="text-end fw-bold text-success">{{ booking.total_paid | inr }}</td>
+                  </tr>
+                {% endif %}
+                {% if booking.balance_due > 0 %}
+                  <tr class="text-danger small">
+                    <td colspan="2" class="text-end fw-bold">Remaining Balance Due:</td>
+                    <td class="text-end fw-bold text-danger">{{ booking.balance_due | inr }}</td>
+                  </tr>
+                {% endif %}
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- Payment History / Receipt Details -->
+        {% if booking.payments %}
+          <div class="mb-4">
+            <h6 class="text-muted text-uppercase fs-8 fw-bold letter-spacing-1 mb-2">Payment Transactions</h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-striped small mb-0">
+                <thead>
+                  <tr>
+                    <th>Receipt #</th>
+                    <th>Transaction ID</th>
+                    <th>Method</th>
+                    <th>Date & Time</th>
+                    <th>Status</th>
+                    <th class="text-end">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for pay in booking.payments %}
+                    <tr>
+                      <td class="fw-bold">{{ pay.receipt_number }}</td>
+                      <td><code>{{ pay.transaction_id }}</code></td>
+                      <td>{{ pay.payment_method | upper }}</td>
+                      <td>{{ pay.created_at.strftime('%d %b %Y, %I:%M %p') }}</td>
+                      <td>
+                        <span class="badge bg-success-subtle text-success">{{ pay.status | capitalize }}</span>
+                      </td>
+                      <td class="text-end fw-bold">{{ pay.amount | inr }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        {% endif %}
+
+        <!-- House Rules & Notes -->
+        <div class="bg-light p-3 rounded-3 small text-secondary">
+          <h6 class="fw-bold text-dark mb-1"><i class="bi bi-shield-check text-primary me-1"></i> House Rules & Check-in Guidelines</h6>
+          <ul class="mb-0 ps-3">
+            <li>Original Govt ID Proof (Aadhaar / Passport / Driving License) required at the time of check-in.</li>
+            <li>Check-in begins at {{ booking.property.short_stay_config.check_in_time if booking.property.short_stay_config else '12:00 PM' }}; check-out before {{ booking.property.short_stay_config.check_out_time if booking.property.short_stay_config else '11:00 AM' }}.</li>
+            <li>Refundable security deposit will be inspected and returned directly by PG owner upon room inspection.</li>
+            {% if booking.property.short_stay_config and booking.property.short_stay_config.house_rules %}
+              <li><strong>Owner House Rules:</strong> {{ booking.property.short_stay_config.house_rules }}</li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action & Payment Sidebar (Col-lg-4) -->
+    <div class="col-lg-4">
+      <!-- Status Notice -->
+      {% if booking.status == 'pending' %}
+        <div class="alert alert-warning border-0 rounded-4 p-3 shadow-xs mb-3">
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <i class="bi bi-clock-history fs-5 text-warning"></i>
+            <strong class="text-dark">Awaiting Owner Confirmation</strong>
+          </div>
+          <p class="small text-secondary mb-0">
+            The owner has received your booking request for {{ booking.total_nights }} night(s). Once approved, you can complete the booking payment.
+          </p>
+        </div>
+      {% elif booking.status == 'confirmed' %}
+        <div class="alert alert-success border-0 rounded-4 p-3 shadow-xs mb-3">
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <i class="bi bi-check-circle-fill fs-5 text-success"></i>
+            <strong class="text-dark">Booking Confirmed by Owner!</strong>
+          </div>
+          <p class="small text-secondary mb-0">
+            {{ booking.owner_notes or "The PG owner has accepted your reservation. Please ensure payment is completed." }}
+          </p>
+        </div>
+      {% elif booking.status == 'rejected' %}
+        <div class="alert alert-danger border-0 rounded-4 p-3 shadow-xs mb-3">
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <i class="bi bi-x-circle-fill fs-5 text-danger"></i>
+            <strong class="text-dark">Booking Request Declined</strong>
+          </div>
+          <p class="small text-secondary mb-0">
+            Reason: {{ booking.rejection_reason or "Rooms unavailable for the selected dates." }}
+          </p>
+        </div>
+      {% elif booking.status == 'cancelled' %}
+        <div class="alert alert-secondary border-0 rounded-4 p-3 shadow-xs mb-3">
+          <strong class="text-dark">Booking Cancelled</strong>
+          <p class="small text-secondary mb-0">This booking has been cancelled.</p>
+        </div>
+      {% endif %}
+
+      <!-- Payment Card -->
+      {% if booking.status in ['pending', 'confirmed'] and booking.payment_status in ['pending', 'advance_paid'] %}
+        <div class="card border-0 rounded-4 shadow-sm bg-white p-4 mb-3">
+          <h5 class="fw-bold mb-1"><i class="bi bi-credit-card-2-front text-primary me-1"></i> Make Payment</h5>
+          <span class="text-secondary small mb-3">Supports Instant UPI, Credit/Debit Card, or Net Banking</span>
+
+          <form action="{{ url_for('customer.pay_short_stay', booking_code=booking.booking_code) }}" method="POST">
+            {{ payment_form.hidden_tag() }}
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Select Payment Amount</label>
+              <div class="d-flex flex-column gap-2">
+                <div class="form-check border p-2 rounded-3">
+                  <input class="form-check-input ms-0 me-2" type="radio" name="amount" id="pay_advance" value="{{ booking.advance_amount }}" checked>
+                  <label class="form-check-label small fw-bold" for="pay_advance">
+                    Pay Booking Advance: {{ booking.advance_amount | inr }}
+                  </label>
+                </div>
+                <div class="form-check border p-2 rounded-3">
+                  <input class="form-check-input ms-0 me-2" type="radio" name="amount" id="pay_full" value="{{ booking.total_amount }}">
+                  <label class="form-check-label small fw-bold" for="pay_full">
+                    Pay Full Amount: {{ booking.total_amount | inr }}
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Payment Method</label>
+              {{ payment_form.payment_method(class="form-select form-select-sm") }}
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Notes (Optional)</label>
+              {{ payment_form.notes(class="form-control form-control-sm", placeholder="e.g. UPI Ref / remarks") }}
+            </div>
+
+            <button type="submit" class="btn btn-success w-100 rounded-pill fw-bold py-2 shadow-xs">
+              <i class="bi bi-lock-fill me-1"></i> Confirm & Authorize Payment
+            </button>
+            <div class="text-center text-muted small mt-2">
+              <i class="bi bi-shield-lock"></i> 256-bit encrypted secure checkout
+            </div>
+          </form>
+        </div>
+      {% endif %}
+
+      <!-- Cancellation Card -->
+      {% if booking.status in ['pending', 'confirmed'] %}
+        <div class="card border-0 rounded-4 shadow-sm bg-white p-4">
+          <h6 class="fw-bold text-dark mb-1">Need to Cancel?</h6>
+          <p class="text-secondary small mb-3">
+            Free cancellation is permitted up to 24 hours prior to check-in. Any paid deposit will be credited back.
+          </p>
+          <form action="{{ url_for('customer.cancel_short_stay_booking', booking_code=booking.booking_code) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this short-stay booking?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-danger btn-sm w-100 rounded-pill fw-bold">
+              <i class="bi bi-x-circle me-1"></i> Cancel Reservation
+            </button>
+          </form>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

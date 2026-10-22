@@ -1,0 +1,81 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}User Account Management — PG Finder Bengaluru{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div>
+    <h2 class="fw-bold mb-1">User Account Directory</h2>
+    <span class="text-secondary small">Manage registered customers, PG property owners, and platform administrators.</span>
+  </div>
+  <div class="btn-group rounded-pill overflow-hidden shadow-xs">
+    <a href="{{ url_for('admin.users', role='all') }}" class="btn btn-sm {% if current_role == 'all' %}btn-primary{% else %}btn-outline-secondary{% endif %}">All</a>
+    <a href="{{ url_for('admin.users', role='customer') }}" class="btn btn-sm {% if current_role == 'customer' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Customers</a>
+    <a href="{{ url_for('admin.users', role='owner') }}" class="btn btn-sm {% if current_role == 'owner' %}btn-primary{% else %}btn-outline-secondary{% endif %}">PG Owners</a>
+    <a href="{{ url_for('admin.users', role='admin') }}" class="btn btn-sm {% if current_role == 'admin' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Admins</a>
+  </div>
+</div>
+
+<div class="card border-0 rounded-4 shadow-sm bg-white overflow-hidden">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="bg-light">
+        <tr>
+          <th>Name</th>
+          <th>Email Address</th>
+          <th>Phone</th>
+          <th>Role</th>
+          <th>Account Status</th>
+          <th>Joined Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+          <tr>
+            <td>
+              <strong class="text-dark">{{ u.name }}</strong>
+              {% if u.is_owner and u.owner_profile and u.owner_profile.business_name %}
+                <div class="small text-muted">{{ u.owner_profile.business_name }}</div>
+              {% endif %}
+            </td>
+            <td>{{ u.email }}</td>
+            <td>{{ u.phone }}</td>
+            <td>
+              <span class="badge {% if u.role == 'admin' %}bg-danger{% elif u.role == 'owner' %}bg-primary{% else %}bg-secondary{% endif %} text-white">
+                {{ u.role | capitalize }}
+              </span>
+            </td>
+            <td>
+              {% if u.is_active %}
+                <span class="badge bg-success-subtle text-success border border-success">Active</span>
+              {% else %}
+                <span class="badge bg-danger-subtle text-danger border border-danger">Suspended</span>
+              {% endif %}
+            </td>
+            <td class="small text-muted">{{ u.created_at.strftime('%d %b %Y') }}</td>
+            <td>
+              {% if u.id != current_user.id %}
+                <form action="{{ url_for('admin.toggle_user_status', user_id=u.id) }}" method="POST" onsubmit="return confirm('Change active status for {{ u.name }}?');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  {% if u.is_active %}
+                    <button type="submit" class="btn btn-xs btn-outline-danger rounded-pill px-2 py-0" style="font-size:11px;">
+                      Suspend
+                    </button>
+                  {% else %}
+                    <button type="submit" class="btn btn-xs btn-outline-success rounded-pill px-2 py-0" style="font-size:11px;">
+                      Reactivate
+                    </button>
+                  {% endif %}
+                </form>
+              {% else %}
+                <span class="text-muted small">Current Admin</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

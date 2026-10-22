@@ -1,0 +1,232 @@
+{% extends 'owner/base_owner.html' %}
+
+{% block title %}Owner Dashboard — PG Finder Bengaluru{% endblock %}
+
+{% block owner_content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div>
+    <h2 class="fw-bold mb-1">PG Portfolio Overview</h2>
+    <span class="text-secondary small">Real-time status of your properties, vacant beds, and incoming prospective tenants.</span>
+  </div>
+  <div>
+    <a href="{{ url_for('owner.add_property') }}" class="btn btn-primary rounded-pill px-4 fw-bold">
+      <i class="bi bi-plus-circle me-1"></i> Add New Property
+    </a>
+  </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon primary"><i class="bi bi-buildings"></i></div>
+      <div>
+        <div class="stat-number">{{ total_properties }}</div>
+        <div class="stat-label">Total Properties</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon emerald"><i class="bi bi-patch-check"></i></div>
+      <div>
+        <div class="stat-number">{{ published_count }}</div>
+        <div class="stat-label">Live / Approved</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon amber"><i class="bi bi-door-open"></i></div>
+      <div>
+        <div class="stat-number">{{ total_vacant_beds }}</div>
+        <div class="stat-label">Vacant Beds Available</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl">
+    <div class="stat-card">
+      <div class="stat-icon rose"><i class="bi bi-chat-dots"></i></div>
+      <div>
+        <div class="stat-number">{{ total_enquiries_count }}</div>
+        <div class="stat-label">Customer Enquiries</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl">
+    <div class="stat-card">
+      <div class="stat-icon emerald"><i class="bi bi-dumbbell"></i></div>
+      <div>
+        <div class="stat-number">{{ gym_count }}</div>
+        <div class="stat-label">In-House Gyms</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Freshness Boost Tip Banner -->
+<div class="card border-0 rounded-4 p-3 shadow-xs mb-4" style="background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%); border-left: 4px solid var(--accent-emerald) !important;">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+      <h6 class="fw-bold text-dark mb-1"><i class="bi bi-stars text-success me-1"></i> Keep Your Listings Fresh for Higher Search Visibility</h6>
+      <p class="text-secondary small mb-0">Listings confirmed today receive up to <strong>3x more enquiries</strong> and appear at the top of customer search results.</p>
+    </div>
+    <a href="{{ url_for('owner.properties') }}" class="btn btn-sm btn-success rounded-pill px-3 fw-bold">
+      <i class="bi bi-arrow-repeat me-1"></i> Re-confirm Availability Now
+    </a>
+  </div>
+</div>
+
+<!-- Properties & Facilities Quick Actions -->
+<div class="card border-0 rounded-4 shadow-sm bg-white p-4 mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h5 class="fw-bold mb-1"><i class="bi bi-building-gear text-primary me-2"></i>My Properties &amp; Facilities</h5>
+      <span class="text-secondary small">Quick access to room vacancies, food schedules, and in-house gym configuration.</span>
+    </div>
+    <a href="{{ url_for('owner.properties') }}" class="small fw-bold text-primary">Manage All &rarr;</a>
+  </div>
+
+  {% if properties %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="small fw-bold">Property</th>
+            <th class="small fw-bold">Locality</th>
+            <th class="small fw-bold">Status</th>
+            <th class="small fw-bold">Vacant Beds</th>
+            <th class="small fw-bold">In-House Gym</th>
+            <th class="small fw-bold text-end">Facility Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for prop in properties %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <img src="{{ prop.cover_image }}" alt="{{ prop.name }}" class="rounded-2" style="width: 44px; height: 34px; object-fit: cover;">
+                  <div>
+                    <strong class="d-block text-dark small">{{ prop.name }}</strong>
+                    <span class="text-muted" style="font-size: 0.75rem;">{{ prop.gender_policy | capitalize }}</span>
+                  </div>
+                </div>
+              </td>
+              <td class="small">{{ prop.locality }}</td>
+              <td>
+                <span class="status-pill status-{{ prop.status }}" style="font-size: 0.75rem;">{{ prop.status | capitalize }}</span>
+              </td>
+              <td class="small">
+                <strong>{{ prop.total_vacant_beds }}</strong> / {{ prop.total_beds }}
+              </td>
+              <td>
+                {% if prop.has_gym %}
+                  <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-2 py-1 small">
+                    <i class="bi bi-dumbbell me-1"></i>Active ({{ prop.gym_facility.access_label }})
+                  </span>
+                {% else %}
+                  <span class="badge rounded-pill bg-light text-muted border px-2 py-1 small">
+                    Not Added
+                  </span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <div class="btn-group btn-group-sm">
+                  <a href="{{ url_for('owner.manage_gym', property_id=prop.id) }}" class="btn btn-outline-success btn-sm rounded-pill px-2 me-1" title="Configure In-House Gym">
+                    <i class="bi bi-dumbbell"></i> Gym
+                  </a>
+                  <a href="{{ url_for('owner.manage_rooms', property_id=prop.id) }}" class="btn btn-outline-primary btn-sm rounded-pill px-2 me-1" title="Manage Rooms">
+                    <i class="bi bi-door-open"></i> Rooms
+                  </a>
+                  <a href="{{ url_for('owner.manage_food', property_id=prop.id) }}" class="btn btn-outline-warning btn-sm rounded-pill px-2 text-dark" title="Food Menu">
+                    <i class="bi bi-cup-hot"></i> Food
+                  </a>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="text-center py-3 text-muted small">
+      No properties added yet. <a href="{{ url_for('owner.add_property') }}">Add your first property</a>.
+    </div>
+  {% endif %}
+</div>
+
+<div class="row g-4">
+  <!-- Recent Enquiries -->
+  <div class="col-lg-6">
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-4 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Recent Customer Enquiries</h5>
+        <a href="{{ url_for('owner.manage_enquiries') }}" class="small fw-bold text-primary">View All</a>
+      </div>
+
+      {% if recent_enquiries %}
+        <div class="d-flex flex-column gap-3">
+          {% for enq in recent_enquiries %}
+            <div class="p-3 rounded-3 bg-light border">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <strong class="text-dark">{{ enq.customer.name }}</strong>
+                <span class="status-pill status-{{ enq.status }}">{{ enq.status | capitalize }}</span>
+              </div>
+              <div class="small text-secondary mb-1">
+                Property: <strong>{{ enq.property.name }}</strong> • Move-in: {{ enq.move_in_date.strftime('%d %b %Y') }}
+              </div>
+              <div class="small text-muted mb-2">Phone: <a href="tel:{{ enq.customer.phone }}" class="text-decoration-none fw-bold">{{ enq.customer.phone }}</a></div>
+              <p class="small text-secondary mb-0 bg-white p-2 rounded border">{{ enq.message }}</p>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-center py-4 text-muted">
+          <i class="bi bi-chat-left-dots fs-2 text-slate-400 d-block mb-1"></i>
+          No enquiries yet. Ensure your properties are approved and have room sharing options added.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Upcoming Visits -->
+  <div class="col-lg-6">
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-4 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Upcoming Visit Requests</h5>
+        <a href="{{ url_for('owner.manage_visits') }}" class="small fw-bold text-primary">View All</a>
+      </div>
+
+      {% if upcoming_visits %}
+        <div class="d-flex flex-column gap-3">
+          {% for vis in upcoming_visits %}
+            <div class="p-3 rounded-3 bg-light border">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <strong class="text-dark">{{ vis.customer.name }}</strong>
+                <span class="status-pill status-{{ vis.status }}">{{ vis.status | capitalize }}</span>
+              </div>
+              <div class="small text-secondary mb-1">
+                Property: <strong>{{ vis.property.name }}</strong>
+              </div>
+              <div class="small text-dark mb-2">
+                <i class="bi bi-calendar-event text-primary me-1"></i> <strong>{{ vis.preferred_date.strftime('%d %b %Y') }}</strong> ({{ vis.preferred_time_slot }})
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="small text-muted">Tel: {{ vis.customer.phone }}</span>
+                <a href="{{ url_for('owner.manage_visits') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                  Respond
+                </a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-center py-4 text-muted">
+          <i class="bi bi-calendar2-check fs-2 text-slate-400 d-block mb-1"></i>
+          No upcoming visit requests.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

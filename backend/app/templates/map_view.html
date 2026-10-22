@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Interactive PG Map Discovery — PG Finder Bengaluru{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-4 py-3">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+      <h3 class="fw-bold mb-0"><i class="bi bi-map-fill text-primary me-2"></i>Map Discovery Bengaluru</h3>
+      <span class="text-secondary small">Explore verified PGs with real coordinates across Koramangala, HSR, Indiranagar, Whitefield, and Electronic City.</span>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('customer.search') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold">
+        <i class="bi bi-list-ul me-1"></i> Switch to List View
+      </a>
+    </div>
+  </div>
+
+  <div class="card border-0 rounded-4 shadow-sm overflow-hidden">
+    <div id="discovery-map"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const pins = {{ property_pins | tojson }};
+    initPGMap('discovery-map', pins, 12.9716, 77.5946, 12);
+  });
+</script>
+{% endblock %}

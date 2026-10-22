@@ -1,0 +1,59 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Stale Availability Alerts — PG Finder Bengaluru{% endblock %}
+
+{% block admin_content %}
+<div class="mb-4">
+  <h2 class="fw-bold mb-1"><i class="bi bi-clock-history text-warning me-2"></i>Stale Availability Alerts</h2>
+  <span class="text-secondary small">Properties that have not re-confirmed their room vacancies in over 7 days. These are de-prioritized in search ranking until refreshed.</span>
+</div>
+
+{% if properties %}
+  <div class="card border-0 rounded-4 shadow-sm bg-white overflow-hidden">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th>Property</th>
+            <th>Owner Contact</th>
+            <th>Last Confirmed Timestamp</th>
+            <th>Days Stale</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for prop in properties %}
+            {% set f = get_freshness_status(prop) %}
+            <tr>
+              <td>
+                <strong class="text-dark d-block">{{ prop.name }}</strong>
+                <span class="small text-muted">{{ prop.locality }}</span>
+              </td>
+              <td>
+                <strong class="text-dark d-block">{{ prop.owner.name }}</strong>
+                <a href="tel:{{ prop.owner.phone }}" class="small text-primary text-decoration-none fw-bold">{{ prop.owner.phone }}</a>
+              </td>
+              <td>
+                <span class="badge-fresh-stale">{{ f.availability.label }}</span>
+                <div class="small text-muted mt-1">{{ f.availability.timestamp }}</div>
+              </td>
+              <td class="fw-bold text-danger">{{ f.availability.time_ago }}</td>
+              <td>
+                <a href="tel:{{ prop.owner.phone }}" class="btn btn-sm btn-outline-primary rounded-pill">
+                  <i class="bi bi-telephone-outbound me-1"></i> Call Owner to Re-confirm
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% else %}
+  <div class="card border-0 rounded-4 p-5 text-center bg-white shadow-sm">
+    <i class="bi bi-patch-check-fill fs-1 text-success mb-2"></i>
+    <h5 class="fw-bold">All Listings Are Fresh!</h5>
+    <p class="text-secondary small">Every active PG owner in Bengaluru has confirmed their availability within the last 7 days.</p>
+  </div>
+{% endif %}
+{% endblock %}

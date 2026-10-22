@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}Compare PG Accommodations — PG Finder Bengaluru{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="mb-4">
+    <h2 class="fw-bold mb-1"><i class="bi bi-arrow-left-right text-primary me-2"></i>Compare Shortlisted PGs</h2>
+    <p class="text-secondary small mb-0">Side-by-side comparison matrix of rents, deposit rules, food schedules, and verified amenities.</p>
+  </div>
+
+  {% if properties and properties|length > 0 %}
+    <div class="table-responsive bg-white rounded-4 shadow-sm border p-3">
+      <table class="table table-bordered align-middle text-center mb-0">
+        <tbody>
+          <!-- Cover & Title -->
+          <tr class="bg-light">
+            <th style="width: 20%;" class="text-start">Property</th>
+            {% for p in properties %}
+              <td style="width: {{ 80 // (properties|length) }}%;">
+                <img src="{{ p.cover_image }}" alt="{{ p.name }}" class="rounded-3 mb-2" style="width: 100%; height: 140px; object-fit: cover;">
+                <h6 class="fw-bold mb-1">{{ p.name }}</h6>
+                <div class="small text-secondary mb-2">{{ p.locality }} • {{ p.gender_policy | capitalize }}</div>
+                <div class="d-flex justify-content-center gap-1">
+                  <a href="{{ url_for('customer.property_detail', slug=p.slug) }}" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold">View</a>
+                  <button type="button" class="btn btn-outline-danger btn-sm rounded-pill" onclick="removeFromCompare({{ p.id }}); window.location.reload();" title="Remove">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            {% endfor %}
+          </tr>
+
+          <!-- Monthly Starting Rent -->
+          <tr>
+            <th class="text-start">Starting Monthly Rent</th>
+            {% for p in properties %}
+              <td class="fs-5 fw-bold text-dark">{{ p.starting_price | inr }}<span class="fs-7 text-muted">/mo</span></td>
+            {% endfor %}
+          </tr>
+
+          <!-- Freshness Status -->
+          <tr>
+            <th class="text-start">Live Availability Freshness</th>
+            {% for p in properties %}
+              {% set f = get_freshness_status(p) %}
+              <td>
+                <span class="{{ f.availability.badge_class }}">{{ f.availability.label }}</span>
+                <span class="small text-muted d-block mt-1">{{ f.availability.time_ago }}</span>
+              </td>
+            {% endfor %}
+          </tr>
+
+          <!-- Vacant Beds -->
+          <tr>
+            <th class="text-start">Vacant Beds Available</th>
+            {% for p in properties %}
+              <td><span class="badge bg-success-subtle text-success border border-success p-2">{{ p.total_vacant_beds }} beds available</span></td>
+            {% endfor %}
+          </tr>
+
+          <!-- Security Deposit & Charges -->
+          <tr>
+            <th class="text-start">Security Deposit</th>
+            {% for p in properties %}
+              <td>{{ p.deposit_months }} Month(s) Rent</td>
+            {% endfor %}
+          </tr>
+
+          <tr>
+            <th class="text-start">Electricity & Maintenance</th>
+            {% for p in properties %}
+              <td>
+                <div>Electricity: <strong>{{ p.electricity_charges_type | capitalize }}</strong></div>
+                <div class="small text-secondary">Maintenance: {% if p.maintenance_charges > 0 %}{{ p.maintenance_charges | inr }}/mo{% else %}Included{% endif %}</div>
+              </td>
+            {% endfor %}
+          </tr>
+
+          <!-- Food Facility -->
+          <tr>
+            <th class="text-start">Food Facility</th>
+            {% for p in properties %}
+              <td>
+                {% if p.food_menu %}
+                  <span class="badge bg-warning-subtle text-warning border border-warning p-1 mb-1">{{ p.food_menu.food_type | capitalize }}</span>
+                  <div class="small text-secondary">{{ p.food_menu.meals_provided }}</div>
+                {% else %}
+                  <span class="text-muted">Not provided</span>
+                {% endif %}
+              </td>
+            {% endfor %}
+          </tr>
+
+          <!-- Metro Distance -->
+          <tr>
+            <th class="text-start">Distance to Metro</th>
+            {% for p in properties %}
+              <td>{% if p.metro_distance_km %}{{ p.metro_distance_km }} km{% else %}N/A{% endif %}</td>
+            {% endfor %}
+          </tr>
+
+          <!-- Curfew & Notice -->
+          <tr>
+            <th class="text-start">Curfew / Gate Closing</th>
+            {% for p in properties %}
+              <td>{{ p.gate_closing_time }}</td>
+            {% endfor %}
+          </tr>
+
+          <tr>
+            <th class="text-start">Notice Period</th>
+            {% for p in properties %}
+              <td>{{ p.notice_period_days }} Days</td>
+            {% endfor %}
+          </tr>
+
+          <!-- In-House Gym -->
+          <tr>
+            <th class="text-start"><i class="bi bi-dumbbell text-success me-1"></i>In-House Gym</th>
+            {% for p in properties %}
+              <td>
+                {% if p.has_gym %}
+                  {% set gym = p.gym_facility %}
+                  <span class="badge px-2 py-1 mb-1" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;">
+                    <i class="bi bi-check-circle-fill me-1"></i>
+                    {% if gym.access_type == 'free' %}Included in Rent{% else %}{{ gym.access_label }}{% endif %}
+                  </span>
+                  {% if not gym.is_temporarily_unavailable %}
+                    <div class="small text-muted mt-1">
+                      <i class="bi bi-clock me-1"></i>{{ gym.opening_time }} – {{ gym.closing_time }}
+                    </div>
+                    {% if gym.equipment %}
+                      <div class="small text-muted">{{ gym.equipment_labels | join(', ') | truncate(50) }}</div>
+                    {% endif %}
+                  {% else %}
+                    <div class="small text-warning mt-1"><i class="bi bi-tools me-1"></i>Temporarily Unavailable</div>
+                  {% endif %}
+                {% else %}
+                  <span class="text-muted small">Not Available</span>
+                {% endif %}
+              </td>
+            {% endfor %}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="card border-0 rounded-4 p-5 text-center bg-white shadow-sm my-4">
+      <div class="brand-icon-badge mx-auto mb-3" style="width:70px; height:70px; font-size:2rem; background:var(--primary-subtle); color:var(--primary);">
+        <i class="bi bi-arrow-left-right"></i>
+      </div>
+      <h4 class="fw-bold">No Properties in Comparison</h4>
+      <p class="text-secondary mx-auto" style="max-width: 480px;">
+        Click the <i class="bi bi-arrow-left-right"></i> <strong>Compare</strong> button on any property card or detail page to add up to 4 PGs for side-by-side comparison.
+      </p>
+      <div>
+        <a href="{{ url_for('customer.search') }}" class="btn btn-primary rounded-pill px-4 fw-bold">
+          <i class="bi bi-search me-1"></i> Browse PGs to Compare
+        </a>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

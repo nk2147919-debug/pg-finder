@@ -1,0 +1,78 @@
+{% extends 'owner/base_owner.html' %}
+
+{% block title %}Manage Customer Enquiries — PG Finder Bengaluru{% endblock %}
+
+{% block owner_content %}
+<div class="mb-4">
+  <h2 class="fw-bold mb-1">Customer Enquiries</h2>
+  <span class="text-secondary small">Respond promptly to interested renters, update lead statuses, and keep internal notes.</span>
+</div>
+
+{% if enquiries %}
+  <div class="card border-0 rounded-4 shadow-sm bg-white overflow-hidden">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th>Customer</th>
+            <th>Property & Room</th>
+            <th>Move-in Date</th>
+            <th>Message</th>
+            <th>Status</th>
+            <th>Update Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for enq in enquiries %}
+            <tr>
+              <td>
+                <strong class="text-dark d-block">{{ enq.customer.name }}</strong>
+                <a href="tel:{{ enq.customer.phone }}" class="small text-primary text-decoration-none fw-bold">
+                  <i class="bi bi-telephone-fill me-1"></i> {{ enq.customer.phone }}
+                </a>
+                <div class="small text-muted">{{ enq.customer.email }}</div>
+              </td>
+              <td>
+                <strong class="text-dark d-block">{{ enq.property.name }}</strong>
+                <span class="small text-secondary">{{ enq.property.locality }}</span>
+                {% if enq.room_type %}
+                  <div class="small text-primary fw-bold">{{ enq.room_type.sharing_label }}</div>
+                {% endif %}
+              </td>
+              <td class="fw-bold">{{ enq.move_in_date.strftime('%d %b %Y') }}</td>
+              <td style="max-width: 250px;">
+                <p class="small text-secondary mb-1 bg-light p-2 rounded border">{{ enq.message }}</p>
+                {% if enq.owner_notes %}
+                  <div class="small text-muted fst-italic">Notes: {{ enq.owner_notes }}</div>
+                {% endif %}
+              </td>
+              <td>
+                <span class="status-pill status-{{ enq.status }}">{{ enq.status | capitalize }}</span>
+              </td>
+              <td>
+                <form action="{{ url_for('owner.update_enquiry_status', enquiry_id=enq.id) }}" method="POST" class="d-flex flex-column gap-1">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <select name="status" class="form-select form-select-sm">
+                    <option value="new" {% if enq.status == 'new' %}selected{% endif %}>New</option>
+                    <option value="contacted" {% if enq.status == 'contacted' %}selected{% endif %}>Contacted</option>
+                    <option value="scheduled" {% if enq.status == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                    <option value="closed" {% if enq.status == 'closed' %}selected{% endif %}>Closed</option>
+                  </select>
+                  <input type="text" name="owner_notes" class="form-control form-control-sm" placeholder="Add note..." value="{{ enq.owner_notes or '' }}">
+                  <button type="submit" class="btn btn-sm btn-primary rounded-pill fw-bold">Update</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% else %}
+  <div class="card border-0 rounded-4 p-5 text-center bg-white shadow-sm">
+    <i class="bi bi-chat-left-dots fs-1 text-slate-400 mb-2"></i>
+    <h5 class="fw-bold">No Customer Enquiries Yet</h5>
+    <p class="text-secondary small">When renters submit enquiries on your property detail pages, they will appear here with direct contact details.</p>
+  </div>
+{% endif %}
+{% endblock %}

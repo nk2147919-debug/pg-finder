@@ -1,0 +1,168 @@
+{% extends 'owner/base_owner.html' %}
+
+{% block title %}{% if is_edit %}Edit {{ property.name }}{% else %}Add New PG Property{% endif %} — PG Finder Bengaluru{% endblock %}
+
+{% block owner_content %}
+<div class="mb-4">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb small mb-1">
+      <li class="breadcrumb-item"><a href="{{ url_for('owner.properties') }}">My Properties</a></li>
+      <li class="breadcrumb-item active">{% if is_edit %}Edit Details{% else %}Add Property{% endif %}</li>
+    </ol>
+  </nav>
+  <h2 class="fw-bold mb-1">{% if is_edit %}Edit Property Details{% else %}Add New PG Accommodation{% endif %}</h2>
+  <span class="text-secondary small">Provide accurate information to pass our platform verification and rank higher.</span>
+</div>
+
+<div class="card border-0 rounded-4 shadow-sm bg-white p-4 p-md-5">
+  <form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+
+    <!-- Section 1: Basic Information -->
+    <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-info-circle me-1"></i> 1. Basic Information</h5>
+    <div class="row g-3 mb-4">
+      <div class="col-md-8">
+        <label class="form-label fw-bold small">PG Name / Property Title *</label>
+        {{ form.name(class="form-control form-control-lg", placeholder="e.g. Sri Balaji Luxury Gents PG") }}
+        {% for err in form.name.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold small">Gender Accommodation Policy *</label>
+        {{ form.gender_policy(class="form-select form-select-lg") }}
+      </div>
+    </div>
+
+    <!-- Section 2: Locality & Map Coordinates -->
+    <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-geo-alt me-1"></i> 2. Location & Commute</h5>
+    <div class="row g-3 mb-3">
+      <div class="col-md-6">
+        <label class="form-label fw-bold small">Locality in Bengaluru *</label>
+        {{ form.locality(class="form-select") }}
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-bold small">Sub-Locality / Sector / Block</label>
+        {{ form.sub_locality(class="form-control", placeholder="e.g. 5th Block, Sector 3, 27th Main") }}
+      </div>
+      <div class="col-12">
+        <label class="form-label fw-bold small">Full Street Address *</label>
+        {{ form.address(class="form-control", rows="2", placeholder="Door number, building name, cross, main road") }}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold small">Bengaluru PIN Code *</label>
+        {{ form.pincode(class="form-control", placeholder="e.g. 560095") }}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold small">Latitude * (e.g. 12.9352)</label>
+        {{ form.latitude(class="form-control", placeholder="12.9352") }}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold small">Longitude * (e.g. 77.6245)</label>
+        {{ form.longitude(class="form-control", placeholder="77.6245") }}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold small">Nearest Landmark / Tech Park</label>
+        {{ form.nearest_landmark(class="form-control", placeholder="e.g. Sony World Signal / EcoSpace") }}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold small">Distance to Metro (km)</label>
+        {{ form.metro_distance_km(class="form-control", placeholder="e.g. 1.2") }}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold small">Distance to Bus Stop (km)</label>
+        {{ form.bus_distance_km(class="form-control", placeholder="e.g. 0.2") }}
+      </div>
+    </div>
+
+    <!-- Section 3: Commercial Terms & House Rules -->
+    <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-cash-coin me-1"></i> 3. Pricing Policies & House Rules</h5>
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <label class="form-label fw-bold small">Deposit (in Months of Rent) *</label>
+        {{ form.deposit_months(class="form-control", placeholder="1.0") }}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold small">Monthly Maintenance (₹, 0 if included)</label>
+        {{ form.maintenance_charges(class="form-control", placeholder="0.0") }}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold small">Electricity Charges Policy</label>
+        {{ form.electricity_charges_type(class="form-select") }}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold small">Gate Closing / Curfew Time</label>
+        {{ form.gate_closing_time(class="form-control", placeholder="e.g. 11:00 PM or No Curfew") }}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold small">Notice Period (Days)</label>
+        {{ form.notice_period_days(class="form-control", placeholder="30") }}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold small">Minimum Stay (Months)</label>
+        {{ form.minimum_stay_months(class="form-control", placeholder="1") }}
+      </div>
+      <div class="col-12">
+        <label class="form-label fw-bold small">Property Description & Overview *</label>
+        {{ form.description(class="form-control", rows="4", placeholder="Highlight room comfort, food quality, power backup, and surrounding area...") }}
+      </div>
+      <div class="col-12">
+        <label class="form-label fw-bold small">House Rules & Policies</label>
+        {{ form.house_rules(class="form-control", rows="2", placeholder="Rules regarding visitors, late entry, smoking, alcohol, quiet hours...") }}
+      </div>
+    </div>
+
+    <!-- Section 4: Amenities -->
+    <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-stars me-1"></i> 4. Amenities Offered</h5>
+    <div class="row g-2 mb-4 p-3 bg-light rounded-3">
+      {% for amen in all_amenities %}
+        <div class="col-md-4 col-sm-6">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="amenities" value="{{ amen.id }}" id="amen_{{ amen.id }}"
+              {% if is_edit and amen.id in existing_amenity_ids %}checked{% endif %}>
+            <label class="form-check-label small" for="amen_{{ amen.id }}">
+              <i class="bi {{ amen.icon }} text-primary me-1"></i> {{ amen.name }}
+            </label>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Section 5: In-House Gym Facility -->
+    <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-dumbbell me-1"></i> 5. In-House Gym Facility</h5>
+    <div class="card border-0 rounded-3 p-3 mb-4 bg-light">
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          <label class="form-check-label fw-bold text-dark" for="has_inhouse_gym">
+            Does your PG have an in-house gym located on the premises?
+          </label>
+          <p class="text-secondary small mb-0">
+            Check this only if gym equipment is located inside the PG building or within its compound. You can configure equipment, timings, rules, and photos in the Gym Manager.
+          </p>
+        </div>
+        <div class="form-check form-switch fs-4">
+          {{ form.has_inhouse_gym(class="form-check-input", id="has_inhouse_gym") }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 6: Cover Photograph Upload -->
+    <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-camera me-1"></i> 6. Photographs</h5>
+    <div class="mb-4">
+      <label class="form-label fw-bold small">Cover Photograph (JPG / PNG / WEBP, Max 16MB)</label>
+      {{ form.cover_image(class="form-control") }}
+      {% if is_edit and property.cover_image %}
+        <div class="mt-2">
+          <span class="small text-muted d-block mb-1">Current Cover Image:</span>
+          <img src="{{ property.cover_image }}" alt="Current cover" class="rounded-3" style="width: 140px; height: 90px; object-fit: cover;">
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+      <a href="{{ url_for('owner.properties') }}" class="btn btn-light rounded-pill px-4">Cancel</a>
+      <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold">
+        <i class="bi bi-check2-circle me-1"></i> {% if is_edit %}Save Changes{% else %}Create Property & Configure Rooms{% endif %}
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

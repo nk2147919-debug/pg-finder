@@ -1,0 +1,463 @@
+{% extends 'base.html' %}
+
+{% block title %}My Customer Dashboard — PG Finder Bengaluru{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Customer Dashboard</h2>
+      <span class="text-secondary small">Manage your enquiries, scheduled visits, and saved accommodations.</span>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('customer.search') }}" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold">
+        <i class="bi bi-search me-1"></i> Browse More PGs
+      </a>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <ul class="nav nav-pills mb-4 bg-white p-2 rounded-4 shadow-xs border" id="customerTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active rounded-pill fw-bold" id="enquiries-tab" data-bs-toggle="pill" data-bs-target="#enquiriesTab" type="button" role="tab">
+        <i class="bi bi-chat-dots me-1"></i> Sent Enquiries ({{ enquiries|length }})
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link rounded-pill fw-bold" id="visits-tab" data-bs-toggle="pill" data-bs-target="#visitsTab" type="button" role="tab">
+        <i class="bi bi-calendar2-check me-1"></i> Scheduled Visits ({{ visits|length }})
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link rounded-pill fw-bold" id="favourites-tab" data-bs-toggle="pill" data-bs-target="#favouritesTab" type="button" role="tab">
+        <i class="bi bi-heart me-1"></i> Saved PGs ({{ favourites|length }})
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link rounded-pill fw-bold" id="shortstay-tab" data-bs-toggle="pill" data-bs-target="#shortstayTab" type="button" role="tab">
+        <i class="bi bi-clock-history me-1"></i> Short-Stay Bookings ({{ short_stays|length }})
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link rounded-pill fw-bold" id="reviews-tab" data-bs-toggle="pill" data-bs-target="#reviewsTab" type="button" role="tab">
+        <i class="bi bi-star me-1"></i> My Reviews ({{ reviews|length }})
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link rounded-pill fw-bold text-primary" id="roommates-tab" data-bs-toggle="pill" data-bs-target="#roommatesTab" type="button" role="tab">
+        <i class="bi bi-people-fill me-1"></i> Find Roommates {% if pending_roommate_requests_count %}<span class="badge bg-danger ms-1">{{ pending_roommate_requests_count }}</span>{% endif %}
+      </button>
+    </li>
+  </ul>
+
+  <!-- Tab Contents -->
+  <div class="tab-content" id="customerTabsContent">
+    <!-- Enquiries Tab -->
+    <div class="tab-pane fade show active" id="enquiriesTab" role="tabpanel">
+      {% if enquiries %}
+        <div class="card border-0 rounded-4 shadow-sm bg-white overflow-hidden">
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead class="bg-light">
+                <tr>
+                  <th>Property</th>
+                  <th>Locality</th>
+                  <th>Move-In Date</th>
+                  <th>Status</th>
+                  <th>Sent On</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for enq in enquiries %}
+                  <tr>
+                    <td>
+                      <a href="{{ url_for('customer.property_detail', slug=enq.property.slug) }}" class="fw-bold text-dark text-decoration-none">
+                        {{ enq.property.name }}
+                      </a>
+                      {% if enq.room_type %}
+                        <div class="small text-muted">{{ enq.room_type.sharing_label }}</div>
+                      {% endif %}
+                    </td>
+                    <td>{{ enq.property.locality }}</td>
+                    <td>{{ enq.move_in_date.strftime('%d %b %Y') }}</td>
+                    <td>
+                      <span class="status-pill status-{{ enq.status }}">{{ enq.status | capitalize }}</span>
+                    </td>
+                    <td class="small text-muted">{{ enq.created_at.strftime('%d %b %Y') }}</td>
+                    <td>
+                      <a href="{{ url_for('customer.property_detail', slug=enq.property.slug) }}" class="btn btn-sm btn-outline-primary rounded-pill">
+                        View PG
+                      </a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% else %}
+        <div class="card border-0 rounded-4 p-5 text-center bg-white shadow-sm">
+          <i class="bi bi-chat-left-text fs-2 text-muted mb-2"></i>
+          <h5 class="fw-bold">No Enquiries Sent Yet</h5>
+          <p class="text-secondary small">When you enquire on any PG page, track responses here.</p>
+          <div>
+            <a href="{{ url_for('customer.search') }}" class="btn btn-primary rounded-pill btn-sm px-4">Browse PGs</a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Visits Tab -->
+    <div class="tab-pane fade" id="visitsTab" role="tabpanel">
+      {% if visits %}
+        <div class="card border-0 rounded-4 shadow-sm bg-white overflow-hidden">
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead class="bg-light">
+                <tr>
+                  <th>Property</th>
+                  <th>Visit Date</th>
+                  <th>Time Slot</th>
+                  <th>Status</th>
+                  <th>Owner Notes</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for vis in visits %}
+                  <tr>
+                    <td>
+                      <a href="{{ url_for('customer.property_detail', slug=vis.property.slug) }}" class="fw-bold text-dark text-decoration-none">
+                        {{ vis.property.name }}
+                      </a>
+                      <div class="small text-muted">{{ vis.property.locality }}</div>
+                    </td>
+                    <td class="fw-bold">
+                      {% if vis.status == 'rescheduled' and vis.rescheduled_date %}
+                        <span class="text-primary">{{ vis.rescheduled_date.strftime('%d %b %Y') }} (Rescheduled)</span>
+                      {% else %}
+                        {{ vis.preferred_date.strftime('%d %b %Y') }}
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if vis.status == 'rescheduled' and vis.rescheduled_time_slot %}
+                        {{ vis.rescheduled_time_slot }}
+                      {% else %}
+                        {{ vis.preferred_time_slot }}
+                      {% endif %}
+                    </td>
+                    <td>
+                      <span class="status-pill status-{{ vis.status }}">{{ vis.status | capitalize }}</span>
+                    </td>
+                    <td class="small text-secondary">{{ vis.owner_message or 'No notes yet' }}</td>
+                    <td>
+                      <a href="{{ url_for('customer.property_detail', slug=vis.property.slug) }}" class="btn btn-sm btn-outline-primary rounded-pill">
+                        View
+                      </a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% else %}
+        <div class="card border-0 rounded-4 p-5 text-center bg-white shadow-sm">
+          <i class="bi bi-calendar-x fs-2 text-muted mb-2"></i>
+          <h5 class="fw-bold">No Visits Scheduled</h5>
+          <p class="text-secondary small">Request an in-person room visit directly on any property detail page.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Favourites Tab -->
+    <div class="tab-pane fade" id="favouritesTab" role="tabpanel">
+      {% if favourites %}
+        <div class="row g-4">
+          {% for fav in favourites %}
+            <div class="col-md-6 col-lg-4">
+              <div class="property-card">
+                <div class="property-card-media">
+                  <img src="{{ fav.property.cover_image }}" alt="{{ fav.property.name }}" class="property-card-img">
+                  <div class="card-top-badges">
+                    <span class="badge-gender badge-gender-{{ fav.property.gender_policy }}">{{ fav.property.gender_policy | capitalize }}</span>
+                    <button type="button" class="fav-btn-circle active fav-btn-action" data-property-id="{{ fav.property.id }}">
+                      <i class="bi bi-heart-fill text-danger"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="property-card-body">
+                  <div class="property-card-locality"><i class="bi bi-geo-alt-fill"></i> {{ fav.property.locality }}</div>
+                  <h5 class="property-card-title"><a href="{{ url_for('customer.property_detail', slug=fav.property.slug) }}">{{ fav.property.name }}</a></h5>
+                  <div class="property-card-footer mt-auto">
+                    <div class="price-container">
+                      <span class="price-sub">Starts From</span>
+                      <div class="price-main">{{ fav.property.starting_price | inr }}</div>
+                    </div>
+                    <a href="{{ url_for('customer.property_detail', slug=fav.property.slug) }}" class="btn btn-primary btn-sm px-3 fw-bold">View</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="card border-0 rounded-4 p-5 text-center bg-white shadow-sm">
+          <i class="bi bi-heart fs-2 text-muted mb-2"></i>
+          <h5 class="fw-bold">No Saved Properties</h5>
+          <p class="text-secondary small">Click the heart icon on any PG card to save it for quick access.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Short-Stay Bookings Tab -->
+    <div class="tab-pane fade" id="shortstayTab" role="tabpanel">
+      {% if short_stays %}
+        <div class="card border-0 rounded-4 shadow-sm bg-white overflow-hidden">
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead class="bg-light">
+                <tr>
+                  <th>Booking Ref</th>
+                  <th>Property</th>
+                  <th>Dates & Duration</th>
+                  <th>Guests</th>
+                  <th>Total Amount</th>
+                  <th>Booking Status</th>
+                  <th>Payment</th>
+                  <th class="text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for b in short_stays %}
+                  <tr>
+                    <td>
+                      <span class="fw-bold text-primary">{{ b.booking_code }}</span>
+                      <div class="text-muted small">{{ b.created_at.strftime('%d %b %Y') }}</div>
+                    </td>
+                    <td>
+                      <a href="{{ url_for('customer.property_detail', slug=b.property.slug) }}" class="fw-bold text-dark text-decoration-none">
+                        {{ b.property.name }}
+                      </a>
+                      <div class="small text-muted">{{ b.property.locality }}</div>
+                    </td>
+                    <td>
+                      <div class="small fw-bold">
+                        {{ b.check_in_date.strftime('%d %b') }} → {{ b.check_out_date.strftime('%d %b %Y') }}
+                      </div>
+                      <span class="badge bg-light text-secondary border">{{ b.total_nights }} Night(s)</span>
+                    </td>
+                    <td>
+                      <span class="badge bg-primary-subtle text-primary">
+                        <i class="bi bi-people-fill me-1"></i> {{ b.num_guests }}
+                      </span>
+                    </td>
+                    <td>
+                      <strong class="text-dark">{{ b.total_amount | inr }}</strong>
+                    </td>
+                    <td>
+                      <span class="status-pill status-{{ b.status }}">{{ b.status | capitalize }}</span>
+                    </td>
+                    <td>
+                      {% if b.payment_status == 'paid' %}
+                        <span class="badge bg-success-subtle text-success small">Paid Full</span>
+                      {% elif b.payment_status == 'advance_paid' %}
+                        <span class="badge bg-info-subtle text-info small">Advance Paid</span>
+                      {% elif b.payment_status == 'refunded' %}
+                        <span class="badge bg-warning-subtle text-dark small">Refunded</span>
+                      {% else %}
+                        <span class="badge bg-danger-subtle text-danger small">Pending</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-end">
+                      <a href="{{ url_for('customer.short_stay_receipt', booking_code=b.booking_code) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold me-1">
+                        <i class="bi bi-receipt me-1"></i> View Receipt
+                      </a>
+                      <a href="{{ url_for('customer.download_short_stay_receipt_pdf', booking_code=b.booking_code) }}" class="btn btn-sm btn-outline-danger rounded-pill px-2 fw-bold" title="Download PDF Invoice / Receipt">
+                        <i class="bi bi-file-earmark-pdf"></i> PDF
+                      </a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% else %}
+        <div class="card border-0 rounded-4 p-5 text-center bg-white shadow-sm">
+          <i class="bi bi-calendar-x fs-2 text-muted mb-2"></i>
+          <h5 class="fw-bold">No Short-Stay Bookings Yet</h5>
+          <p class="text-secondary small mb-3">Looking for a weekend stay, 1-week stay, or trip with friends in Bengaluru?</p>
+          <div>
+            <a href="{{ url_for('customer.short_stay_search') }}" class="btn btn-primary rounded-pill px-4 fw-bold">
+              <i class="bi bi-search me-1"></i> Explore Short Stays
+            </a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Reviews Tab -->
+    <div class="tab-pane fade" id="reviewsTab" role="tabpanel">
+      {% if reviews %}
+        <div class="card border-0 rounded-4 shadow-sm bg-white overflow-hidden p-3">
+          {% for rev in reviews %}
+            <div class="p-3 border-bottom last-border-0">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <h6 class="fw-bold mb-0">{{ rev.property.name }}</h6>
+                <span class="status-pill status-{{ rev.status }}">{{ rev.status | capitalize }}</span>
+              </div>
+              <div class="text-warning small mb-2">Rating: {{ rev.rating }}/5 ⭐</div>
+              <p class="small text-secondary mb-0">{{ rev.review_text }}</p>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="card border-0 rounded-4 p-5 text-center bg-white shadow-sm">
+          <i class="bi bi-star fs-2 text-muted mb-2"></i>
+          <h5 class="fw-bold">No Reviews Submitted</h5>
+          <p class="text-secondary small">Share your experience on PGs you have stayed in.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Find Roommates & PG Community Tab -->
+    <div class="tab-pane fade" id="roommatesTab" role="tabpanel">
+      <div class="row g-4">
+        <!-- Roommate Profile Summary -->
+        <div class="col-lg-5">
+          <div class="card border-0 rounded-4 shadow-sm p-4 bg-white h-100">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <h5 class="fw-bold mb-0">My Roommate Profile</h5>
+              {% if roommate_profile %}
+                <span class="badge {% if roommate_profile.is_active %}bg-success{% else %}bg-secondary{% endif %} rounded-pill px-3 py-1">
+                  {{ roommate_profile.status|capitalize }}
+                </span>
+              {% endif %}
+            </div>
+
+            {% if roommate_profile %}
+              <div class="mb-3">
+                <div class="small text-muted mb-1"><i class="bi bi-geo-alt text-danger me-1"></i> Preferred Locality: <strong class="text-dark">{{ roommate_profile.preferred_locality }}</strong></div>
+                <div class="small text-muted mb-1"><i class="bi bi-wallet2 text-success me-1"></i> Budget: <strong class="text-dark">₹{{ "{:,.0f}".format(roommate_profile.min_budget) }} - ₹{{ "{:,.0f}".format(roommate_profile.max_budget) }}</strong></div>
+                <div class="small text-muted mb-1"><i class="bi bi-briefcase text-primary me-1"></i> Occupation: <strong class="text-dark">{{ roommate_profile.occupation }}</strong></div>
+                <div class="small text-muted mb-1"><i class="bi bi-door-open text-info me-1"></i> Preferred Sharing: <strong class="text-dark">{{ roommate_profile.preferred_sharing|capitalize }}</strong></div>
+                <div class="small text-muted mb-1"><i class="bi bi-cup-hot text-warning me-1"></i> Food Preference: <strong class="text-dark">{{ roommate_profile.food_preference.replace('_', ' ')|capitalize }}</strong></div>
+                <div class="small text-muted mb-1"><i class="bi bi-clock text-secondary me-1"></i> Sleep: <strong class="text-dark">{{ roommate_profile.sleep_schedule.replace('_', ' ')|capitalize }}</strong></div>
+              </div>
+
+              {% if roommate_profile.bio %}
+                <p class="small text-secondary bg-light p-3 rounded-3 mb-3">"{{ roommate_profile.bio }}"</p>
+              {% endif %}
+
+              <div class="d-flex gap-2 mt-auto">
+                <a href="{{ url_for('customer.roommates', tab='profile') }}" class="btn btn-outline-primary rounded-pill w-100 fw-bold btn-sm py-2">
+                  <i class="bi bi-pencil-square me-1"></i> Edit Profile
+                </a>
+                <a href="{{ url_for('customer.roommates', tab='recommended') }}" class="btn btn-primary rounded-pill w-100 fw-bold btn-sm py-2">
+                  <i class="bi bi-magic me-1"></i> Find Matches
+                </a>
+              </div>
+            {% else %}
+              <div class="text-center py-4">
+                <i class="bi bi-person-plus text-primary fs-1 d-block mb-2"></i>
+                <h6 class="fw-bold">No Roommate Profile Yet</h6>
+                <p class="small text-muted mb-3">Create your profile to calculate compatibility scores and match with verified roommates in Bengaluru.</p>
+                <a href="{{ url_for('customer.roommates', tab='profile') }}" class="btn btn-primary rounded-pill px-4 fw-bold">
+                  Create Profile
+                </a>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Quick Access to Matching Sections -->
+        <div class="col-lg-7">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <a href="{{ url_for('customer.roommates', tab='recommended') }}" class="card border-0 shadow-sm rounded-4 p-3 bg-white text-decoration-none h-100 card-hover">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="rounded-circle bg-primary bg-opacity-10 text-primary p-3 fs-4">
+                    <i class="bi bi-magic"></i>
+                  </div>
+                  <div>
+                    <h6 class="fw-bold text-dark mb-1">Recommended Roommates</h6>
+                    <small class="text-muted">Ranked by lifestyle & budget score</small>
+                  </div>
+                </div>
+              </a>
+            </div>
+
+            <div class="col-md-6">
+              <a href="{{ url_for('customer.roommates', tab='matches') }}" class="card border-0 shadow-sm rounded-4 p-3 bg-white text-decoration-none h-100 card-hover">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="rounded-circle bg-danger bg-opacity-10 text-danger p-3 fs-4">
+                    <i class="bi bi-heart-fill"></i>
+                  </div>
+                  <div>
+                    <h6 class="fw-bold text-dark mb-1">Mutual Matches</h6>
+                    <small class="text-muted">Unlocked direct contact & WhatsApp</small>
+                  </div>
+                </div>
+              </a>
+            </div>
+
+            <div class="col-md-6">
+              <a href="{{ url_for('customer.roommates', tab='requests') }}" class="card border-0 shadow-sm rounded-4 p-3 bg-white text-decoration-none h-100 card-hover">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="rounded-circle bg-warning bg-opacity-10 text-warning p-3 fs-4">
+                    <i class="bi bi-inbox-fill"></i>
+                  </div>
+                  <div>
+                    <h6 class="fw-bold text-dark mb-1">Roommate Requests</h6>
+                    <small class="text-muted">{% if pending_roommate_requests_count %}<strong class="text-danger">{{ pending_roommate_requests_count }} pending</strong>{% else %}Track sent & received{% endif %}</small>
+                  </div>
+                </div>
+              </a>
+            </div>
+
+            <div class="col-md-6">
+              <a href="{{ url_for('customer.roommates', tab='communities') }}" class="card border-0 shadow-sm rounded-4 p-3 bg-white text-decoration-none h-100 card-hover">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="rounded-circle bg-info bg-opacity-10 text-info p-3 fs-4">
+                    <i class="bi bi-buildings"></i>
+                  </div>
+                  <div>
+                    <h6 class="fw-bold text-dark mb-1">My PG Communities</h6>
+                    <small class="text-muted">{{ my_communities|length }} authorized boards</small>
+                  </div>
+                </div>
+              </a>
+            </div>
+
+            <!-- Authorized Communities Listing -->
+            <div class="col-12 mt-3">
+              <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                <h6 class="fw-bold mb-3"><i class="bi bi-buildings me-2 text-primary"></i> My Active PG Communities</h6>
+                {% if not my_communities %}
+                  <p class="small text-muted mb-0">You are not currently registered to any private PG community boards. Book a stay or confirm a shared room to join.</p>
+                {% else %}
+                  <div class="list-group list-group-flush">
+                    {% for p in my_communities %}
+                      <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                        <div>
+                          <strong class="text-dark">{{ p.name }}</strong>
+                          <small class="text-muted d-block"><i class="bi bi-geo-alt"></i> {{ p.locality }}</small>
+                        </div>
+                        <a href="{{ url_for('customer.pg_community_board', property_id=p.id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                          Open Board <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

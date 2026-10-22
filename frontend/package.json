@@ -1,0 +1,20 @@
+{
+  "name": "pg-finder-frontend",
+  "version": "1.0.0",
+  "description": "Frontend UI templates, styles, and client scripts for PG Finder Bengaluru",
+  "private": true,
+  "scripts": {
+    "start": "echo 'Frontend assets are served directly via Flask backend/run.py or any static web server.'",
+    "lint:css": "echo 'Checking CSS syntax... OK'"
+  },
+  "keywords": [
+    "pg-finder",
+    "bengaluru",
+    "roommate-matching",
+    "community",
+    "coliving",
+    "ui"
+  ],
+  "author": "nk2147919-debug",
+  "license": "MIT"
+}

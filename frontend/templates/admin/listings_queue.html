@@ -1,0 +1,119 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Listing Approvals Queue — PG Finder Bengaluru{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div>
+    <h2 class="fw-bold mb-1">Listing Approvals Queue</h2>
+    <span class="text-secondary small">Verify owner identity, property documents, bed availability, and approve or reject submissions.</span>
+  </div>
+  <div class="btn-group rounded-pill overflow-hidden shadow-xs">
+    <a href="{{ url_for('admin.listings_queue', status='pending_approval') }}" class="btn btn-sm {% if current_status == 'pending_approval' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+      Pending
+    </a>
+    <a href="{{ url_for('admin.listings_queue', status='approved') }}" class="btn btn-sm {% if current_status == 'approved' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+      Approved
+    </a>
+    <a href="{{ url_for('admin.listings_queue', status='rejected') }}" class="btn btn-sm {% if current_status == 'rejected' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+      Rejected
+    </a>
+    <a href="{{ url_for('admin.listings_queue', status='all') }}" class="btn btn-sm {% if current_status == 'all' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+      All
+    </a>
+  </div>
+</div>
+
+{% if properties %}
+  <div class="card border-0 rounded-4 shadow-sm bg-white overflow-hidden">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th>Property</th>
+            <th>Owner Info</th>
+            <th>Locality & Pincode</th>
+            <th>Rooms & Beds</th>
+            <th>Status</th>
+            <th>Review Decision</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for prop in properties %}
+            <tr>
+              <td>
+                <strong class="text-dark d-block">{{ prop.name }}</strong>
+                <span class="small text-muted">{{ prop.gender_policy | capitalize }} • {{ prop.property_type | capitalize }}</span>
+                <div class="mt-1">
+                  <a href="{{ url_for('customer.property_detail', slug=prop.slug) }}" class="btn btn-xs btn-outline-info rounded-pill py-0 px-2" style="font-size: 11px;" target="_blank">
+                    <i class="bi bi-box-arrow-up-right"></i> Preview Listing
+                  </a>
+                </div>
+              </td>
+              <td>
+                <strong class="text-dark d-block">{{ prop.owner.name }}</strong>
+                <a href="tel:{{ prop.owner.phone }}" class="small text-primary text-decoration-none">{{ prop.owner.phone }}</a>
+                <div class="small text-muted">{{ prop.owner.email }}</div>
+              </td>
+              <td>
+                <div class="fw-bold">{{ prop.locality }}</div>
+                <div class="small text-muted">{{ prop.address }}</div>
+                <div class="small text-secondary">PIN: {{ prop.pincode }}</div>
+              </td>
+              <td>
+                <span class="badge bg-light text-dark border">{{ prop.room_types|length }} room types</span>
+                <div class="small text-success mt-1">{{ prop.total_vacant_beds }} beds vacant</div>
+              </td>
+              <td>
+                <span class="status-pill status-{{ prop.status }}">{{ prop.status | replace('_', ' ') | capitalize }}</span>
+                {% if prop.rejection_reason %}
+                  <div class="small text-danger mt-1">Reason: {{ prop.rejection_reason }}</div>
+                {% endif %}
+              </td>
+              <td>
+                {% if prop.status == 'pending_approval' %}
+                  <div class="d-flex flex-column gap-1">
+                    <!-- Approve Form -->
+                    <form action="{{ url_for('admin.action_listing', property_id=prop.id) }}" method="POST">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="action" value="approve">
+                      <div class="form-check small mb-1">
+                        <input class="form-check-input" type="checkbox" name="mark_verified" value="1" id="ver_{{ prop.id }}" checked>
+                        <label class="form-check-label" for="ver_{{ prop.id }}" style="font-size:11px;">Mark as Verified</label>
+                      </div>
+                      <button type="submit" class="btn btn-sm btn-success rounded-pill w-100 fw-bold">
+                        <i class="bi bi-check-circle me-1"></i> Approve
+                      </button>
+                    </form>
+
+                    <!-- Reject Button / Form -->
+                    <button class="btn btn-sm btn-outline-danger rounded-pill w-100" type="button" data-bs-toggle="collapse" data-bs-target="#rejectCollapse_{{ prop.id }}">
+                      <i class="bi bi-x-circle me-1"></i> Reject
+                    </button>
+                    <div class="collapse mt-1" id="rejectCollapse_{{ prop.id }}">
+                      <form action="{{ url_for('admin.action_listing', property_id=prop.id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="action" value="reject">
+                        <input type="text" name="reason" class="form-control form-control-sm mb-1" placeholder="Rejection reason..." required>
+                        <button type="submit" class="btn btn-sm btn-danger rounded-pill w-100">Confirm Reject</button>
+                      </form>
+                    </div>
+                  </div>
+                {% else %}
+                  <span class="text-muted small">Processed</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% else %}
+  <div class="card border-0 rounded-4 p-5 text-center bg-white shadow-sm">
+    <i class="bi bi-check2-all fs-1 text-success mb-2"></i>
+    <h5 class="fw-bold">No Listings in this Category</h5>
+    <p class="text-secondary small">All property submissions have been audited and resolved.</p>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,197 @@
+{% extends 'owner/base_owner.html' %}
+
+{% block title %}Manage Availability & Block Dates — {{ property.name }}{% endblock %}
+
+{% block owner_content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div>
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <a href="{{ url_for('owner.manage_short_stay', property_id=property.id) }}" class="btn btn-outline-secondary btn-sm rounded-pill">
+        <i class="bi bi-arrow-left"></i> Short-Stay Settings
+      </a>
+      <span class="status-pill status-{{ property.status }}">{{ property.status | capitalize }}</span>
+    </div>
+    <h2 class="fw-bold mb-0">Availability & Blackout Calendar: {{ property.name }}</h2>
+    <span class="text-secondary small">Block dates for maintenance, private events, or offline walk-in bookings to prevent double-bookings.</span>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('customer.property_detail', slug=property.slug) }}" target="_blank" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+      <i class="bi bi-box-arrow-up-right me-1"></i> Customer View
+    </a>
+  </div>
+</div>
+
+<!-- Occupancy & Availability KPI Row -->
+{% if occupancy_data %}
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-3">
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          <span class="text-secondary small fw-bold">30-Day Occupancy</span>
+          <h3 class="fw-bold text-primary mb-0">{{ occupancy_data.occupancy_rate }}%</h3>
+          <span class="text-muted fs-8">{{ occupancy_data.booked_nights }} booked nights</span>
+        </div>
+        <div class="rounded-circle bg-primary-subtle text-primary p-3 fs-4">
+          <i class="bi bi-pie-chart-fill"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-3">
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          <span class="text-secondary small fw-bold">Active Reservations</span>
+          <h3 class="fw-bold text-success mb-0">{{ active_bookings|length }}</h3>
+          <span class="text-muted fs-8">Upcoming short stays</span>
+        </div>
+        <div class="rounded-circle bg-success-subtle text-success p-3 fs-4">
+          <i class="bi bi-calendar-check-fill"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-3">
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          <span class="text-secondary small fw-bold">Owner Blocked Dates</span>
+          <h3 class="fw-bold text-danger mb-0">{{ blocked_dates|length }}</h3>
+          <span class="text-muted fs-8">Maintenance / offline</span>
+        </div>
+        <div class="rounded-circle bg-danger-subtle text-danger p-3 fs-4">
+          <i class="bi bi-slash-circle-fill"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="row g-4">
+  <!-- Block New Date Form (Col-lg-5) -->
+  <div class="col-lg-5">
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-4">
+      <h5 class="fw-bold mb-1"><i class="bi bi-calendar-x text-danger me-2"></i>Block a Date</h5>
+      <p class="text-secondary small mb-3">
+        Select a date to blackout. Customers will not be allowed to select this date during short-stay search or checkout.
+      </p>
+
+      <form action="{{ url_for('owner.manage_calendar', property_id=property.id) }}" method="POST">
+        {{ form.hidden_tag() }}
+
+        <div class="mb-3">
+          <label class="form-label fw-bold small">Date to Block *</label>
+          {{ form.date(class="form-control", type="date", id="block_date_input") }}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold small">Reason / Notes (Optional)</label>
+          {{ form.reason(class="form-control", placeholder="e.g. Deep cleaning, festival maintenance, walk-in guest") }}
+        </div>
+
+        <button type="submit" class="btn btn-danger w-100 rounded-pill fw-bold">
+          <i class="bi bi-lock-fill me-1"></i> Block This Date
+        </button>
+      </form>
+    </div>
+
+    <!-- Active Reservations Summary -->
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-4 mt-4">
+      <h5 class="fw-bold mb-1"><i class="bi bi-calendar-check text-primary me-2"></i>Upcoming Short Stays</h5>
+      <span class="text-secondary small mb-3">Confirmed and pending guest reservations</span>
+
+      {% if active_bookings %}
+        <div class="d-flex flex-column gap-2">
+          {% for b in active_bookings %}
+            <div class="p-3 rounded-3 bg-light border small">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <strong class="text-dark">{{ b.customer.name }} ({{ b.num_guests }} guest{{ 's' if b.num_guests > 1 else '' }})</strong>
+                <span class="status-pill status-{{ b.status }}">{{ b.status | capitalize }}</span>
+              </div>
+              <div class="text-primary fw-bold">
+                <i class="bi bi-arrow-right-short"></i> {{ b.check_in_date.strftime('%d %b %Y') }} to {{ b.check_out_date.strftime('%d %b %Y') }} ({{ b.total_nights }} nights)
+              </div>
+              <div class="text-muted small mt-1">
+                Ref: <code>{{ b.booking_code }}</code> • {{ b.total_amount | inr }}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-center py-4 text-muted small">
+          <i class="bi bi-calendar-check fs-2 d-block mb-1 text-slate-300"></i>
+          No upcoming short stays scheduled yet.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Currently Blocked Dates (Col-lg-7) -->
+  <div class="col-lg-7">
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0"><i class="bi bi-slash-circle text-danger me-2"></i>Currently Blocked Dates ({{ blocked_dates|length }})</h5>
+      </div>
+
+      {% if blocked_dates %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+              <tr>
+                <th>Blocked Date</th>
+                <th>Reason</th>
+                <th>Blocked On</th>
+                <th class="text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for bd in blocked_dates %}
+                <tr>
+                  <td>
+                    <div class="fw-bold text-dark">
+                      <i class="bi bi-calendar-x text-danger me-1"></i> {{ bd.date.strftime('%a, %d %b %Y') }}
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge bg-light text-secondary border">{{ bd.reason or 'Owner Blackout' }}</span>
+                  </td>
+                  <td class="small text-muted">
+                    {{ bd.created_at.strftime('%d %b %Y') }}
+                  </td>
+                  <td class="text-end">
+                    <form action="{{ url_for('owner.unblock_date', property_id=property.id, date_id=bd.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Unblock this date and make it available for bookings?');">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm btn-outline-success rounded-pill px-3" title="Unblock Date">
+                        <i class="bi bi-unlock-fill me-1"></i> Unblock
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-5 text-muted">
+          <i class="bi bi-calendar2-check fs-1 text-success mb-2 d-block"></i>
+          <h5 class="fw-bold text-dark">All Dates Open for Booking</h5>
+          <p class="small text-secondary mb-0">No blackout dates currently registered for this property.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const dateInput = document.getElementById('block_date_input');
+  if (dateInput) {
+    dateInput.min = new Date().toISOString().split('T')[0];
+  }
+});
+</script>
+{% endblock %}

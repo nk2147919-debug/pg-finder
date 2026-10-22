@@ -1,0 +1,543 @@
+{% extends 'base.html' %}
+
+{% block title %}Find Your Perfect PG in Bengaluru — PG Finder{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-wrapper">
+  <div class="container position-relative">
+    <div class="row align-items-center">
+      <div class="col-lg-10 mx-auto text-center">
+        <div class="hero-badge-live">
+          <span class="pulse-dot"></span>
+          <span>Bengaluru's First Live Freshness Accommodation Engine</span>
+        </div>
+        <h1 class="hero-title">
+          Find Your Perfect <span>PG in Bengaluru</span>
+        </h1>
+        <p class="hero-subtitle mx-auto">
+          Discover verified paying guest rooms with live bed availability, transparent weekly food menus, deposit terms, and real distance to your tech park or metro station.
+        </p>
+
+        <!-- Hero Search Box -->
+        <div class="hero-search-card text-start">
+          <form action="{{ url_for('customer.search') }}" method="GET">
+            <div class="row g-3 align-items-end">
+              <div class="col-lg-4 col-md-6">
+                <div class="search-field-group">
+                  <label><i class="bi bi-geo-alt text-primary"></i> Locality or Landmark</label>
+                  <select name="locality" class="form-select">
+                    <option value="">Any Locality in Bengaluru</option>
+                    {% for loc in popular_localities %}
+                      <option value="{{ loc.name }}">{{ loc.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-lg-3 col-md-6">
+                <div class="search-field-group">
+                  <label><i class="bi bi-gender-ambiguous text-primary"></i> Accommodation</label>
+                  <select name="gender" class="form-select">
+                    <option value="">All (Gents / Ladies / Unisex)</option>
+                    <option value="gents">Gents PG / Boys</option>
+                    <option value="ladies">Ladies PG / Girls</option>
+                    <option value="unisex">Coliving / Unisex</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-lg-3 col-md-6">
+                <div class="search-field-group">
+                  <label><i class="bi bi-cash-stack text-primary"></i> Max Monthly Rent</label>
+                  <select name="max_rent" class="form-select">
+                    <option value="">Any Budget</option>
+                    <option value="8000">Under ₹8,000 / month</option>
+                    <option value="12000">Under ₹12,000 / month</option>
+                    <option value="16000">Under ₹16,000 / month</option>
+                    <option value="25000">Under ₹25,000 / month</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-lg-2 col-md-6">
+                <button type="submit" class="btn btn-search-hero w-100">
+                  <i class="bi bi-search"></i> Search PGs
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Locality Shortcuts -->
+        <div class="locality-pills-row justify-content-center">
+          {% for loc in popular_localities %}
+            <a href="{{ url_for('customer.search', locality=loc.name) }}" class="locality-chip">
+              <i class="bi {{ loc.icon }}"></i>
+              <span>{{ loc.name }}</span>
+              <span class="count-badge">{{ locality_counts.get(loc.name, 0) }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Unique Value Proposition: PG Freshness Score -->
+<section class="py-5 bg-white border-bottom">
+  <div class="container">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-6">
+        <span class="text-primary fw-bold text-uppercase fs-7 letter-spacing-1">Innovation in PG Search</span>
+        <h2 class="fw-bold mt-1 mb-3">No More Outdated Rents or Fake Availability</h2>
+        <p class="text-secondary mb-4">
+          Most accommodation sites show listings unchanged for months. At <strong>PG Finder Bengaluru</strong>, every property card features our real-time <strong>Freshness System</strong> powered by actual database audit timestamps.
+        </p>
+
+        <div class="d-flex flex-column gap-3">
+          <div class="d-flex align-items-start gap-3">
+            <span class="badge-fresh-today mt-1"><i class="bi bi-check-circle-fill"></i> Today</span>
+            <div>
+              <h6 class="fw-bold mb-1">Availability Confirmed Today</h6>
+              <p class="small text-secondary mb-0">The owner confirmed bed vacancies within the last 24 hours. Zero surprises when you visit.</p>
+            </div>
+          </div>
+          <div class="d-flex align-items-start gap-3">
+            <span class="badge-fresh-week mt-1"><i class="bi bi-calendar-check"></i> 7 Days</span>
+            <div>
+              <h6 class="fw-bold mb-1">Confirmed Within Last 7 Days</h6>
+              <p class="small text-secondary mb-0">Active listings re-verified this week with current rent rates and vacancy counts.</p>
+            </div>
+          </div>
+          <div class="d-flex align-items-start gap-3">
+            <span class="badge-fresh-stale mt-1"><i class="bi bi-clock-history"></i> Overdue</span>
+            <div>
+              <h6 class="fw-bold mb-1">Transparent Warning on Stale Listings</h6>
+              <p class="small text-secondary mb-0">If an owner hasn't updated prices in over 7 days, we transparently warn you rather than misleading you.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden p-4 bg-light">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="badge-fresh-today"><i class="bi bi-patch-check-fill"></i> Live Freshness Badge</span>
+            <span class="text-secondary small"><i class="bi bi-clock me-1"></i>Updated 3 hours ago</span>
+          </div>
+          <h5 class="fw-bold mb-1 text-dark">Sri Balaji Luxury Gents PG — Koramangala 5th Block</h5>
+          <p class="text-secondary small mb-3">Walkable to Sony World Signal & Forum Mall</p>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <div class="bg-white p-2 rounded-3 border text-center">
+                <span class="small text-secondary d-block">Single Sharing</span>
+                <span class="fw-bold text-dark">₹18,500/mo</span>
+                <span class="badge bg-success-subtle text-success d-block mt-1">2 beds left</span>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="bg-white p-2 rounded-3 border text-center">
+                <span class="small text-secondary d-block">Double Sharing</span>
+                <span class="fw-bold text-dark">₹10,500/mo</span>
+                <span class="badge bg-success-subtle text-success d-block mt-1">2 beds left</span>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white p-3 rounded-3 border small text-secondary">
+            <div class="d-flex justify-content-between mb-1">
+              <span><i class="bi bi-cup-hot text-primary me-2"></i>Weekly Food Menu:</span>
+              <strong class="text-success">Active & Homestyle</strong>
+            </div>
+            <div class="d-flex justify-content-between">
+              <span><i class="bi bi-shield-check text-primary me-2"></i>Physical Field Verification:</span>
+              <strong class="text-primary">Verified by Team</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Featured Properties Section -->
+<section class="py-5">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+      <div>
+        <span class="text-primary fw-bold text-uppercase fs-7 letter-spacing-1">Handpicked Accommodations</span>
+        <h2 class="fw-bold mb-1">Featured PGs Across Bengaluru</h2>
+      </div>
+      <a href="{{ url_for('customer.search') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold">
+        View All PGs <i class="bi bi-arrow-right ms-1"></i>
+      </a>
+    </div>
+
+    <div class="row g-4">
+      {% for prop in featured_properties %}
+        {% set fresh = get_freshness_status(prop) %}
+        <div class="col-lg-4 col-md-6">
+          <div class="property-card">
+            <div class="property-card-media">
+              <img src="{{ prop.cover_image }}" alt="{{ prop.name }}" class="property-card-img" loading="lazy">
+              <div class="card-top-badges">
+                <span class="{{ fresh.availability.badge_class }}">
+                  <i class="bi bi-clock-history"></i> {{ fresh.availability.label }}
+                </span>
+                <button type="button" class="fav-btn-circle fav-btn-action" data-property-id="{{ prop.id }}" title="Save to Favourites">
+                  <i class="bi bi-heart"></i>
+                </button>
+              </div>
+              <div class="card-bottom-badges">
+                <span class="badge-gender badge-gender-{{ prop.gender_policy }}">{{ prop.gender_policy | capitalize }}</span>
+                {% if fresh.verification.is_verified %}
+                  <span class="badge-verified"><i class="bi bi-patch-check-fill"></i> Verified</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="property-card-body">
+              <div class="property-card-locality">
+                <i class="bi bi-geo-alt-fill"></i> {{ prop.locality }}
+                {% if prop.metro_distance_km %}
+                  <span class="text-secondary fw-normal ms-auto small">• {{ prop.metro_distance_km }}km to metro</span>
+                {% endif %}
+              </div>
+
+              <h4 class="property-card-title">
+                <a href="{{ url_for('customer.property_detail', slug=prop.slug) }}">{{ prop.name }}</a>
+              </h4>
+
+              <div class="property-meta-row">
+                <span class="vacant-beds-pill {% if prop.total_vacant_beds == 0 %}zero{% endif %}">
+                  <i class="bi bi-person-fill"></i> {{ prop.total_vacant_beds }} beds vacant
+                </span>
+                {% if prop.average_rating %}
+                  <span class="text-warning fw-bold">
+                    <i class="bi bi-star-fill"></i> {{ prop.average_rating }} ({{ prop.review_count }})
+                  </span>
+                {% endif %}
+              </div>
+
+              <div class="sharing-tags-wrap">
+                {% for st in prop.sharing_types %}
+                  <span class="sharing-tag">{{ st | capitalize }} Sharing</span>
+                {% endfor %}
+              </div>
+
+              <div class="amenities-preview-row">
+                <span title="Wi-Fi"><i class="bi bi-wifi"></i></span>
+                <span title="3 Times Food"><i class="bi bi-cup-hot"></i></span>
+                <span title="Power Backup"><i class="bi bi-lightning-charge"></i></span>
+                <span title="Washing Machine"><i class="bi bi-droplet"></i></span>
+                <span title="24/7 Security"><i class="bi bi-shield-check"></i></span>
+              </div>
+
+              <div class="property-card-footer">
+                <div class="price-container">
+                  <span class="price-sub">Starts From</span>
+                  <div class="price-main">{{ prop.starting_price | inr }} <span>/ mo</span></div>
+                </div>
+                <div class="d-flex gap-1">
+                  <button type="button" class="btn btn-outline-secondary btn-sm px-2" onclick="addToCompare({{ prop.id }})" title="Add to Compare">
+                    <i class="bi bi-arrow-left-right"></i>
+                  </button>
+                  <a href="{{ url_for('customer.property_detail', slug=prop.slug) }}" class="btn btn-primary btn-sm px-3 fw-bold">
+                    View Details
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     NEW SECTION: Short Stay / Friends Stay in Bengaluru
+     ========================================================================== -->
+<section class="py-5 bg-gradient-shortstay position-relative overflow-hidden" style="background: linear-gradient(180deg, #f0fdf4 0%, #e0f2fe 100%);">
+  <div class="container position-relative">
+    <div class="d-flex flex-wrap justify-content-between align-items-end mb-4 gap-3">
+      <div>
+        <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-primary bg-opacity-10 text-primary mb-2 small fw-bold">
+          <i class="bi bi-lightning-charge-fill text-warning"></i> Instant Short Stay / Friends Stay
+        </div>
+        <h2 class="fw-bold mb-1">Stay for 1 Night, 2–3 Days, 1 Week, or 15 Days</h2>
+        <p class="text-secondary small mb-0">
+          Bengaluru's verified PGs now accept flexible short stays for interviews, conferences, exam sprints, or weekend trips with friends.
+        </p>
+      </div>
+      <div>
+        <a href="{{ url_for('customer.short_stay_search') }}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-xs">
+          Explore All Short Stays <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- Quick Duration Selector Chips -->
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-4 p-3 bg-white rounded-4 border shadow-xs">
+      <span class="text-secondary small fw-bold me-1"><i class="bi bi-clock-history text-primary"></i> Popular Durations:</span>
+      <a href="{{ url_for('customer.short_stay_search', days=1) }}" class="btn btn-sm btn-outline-primary rounded-pill">1 Night (Quick Stop)</a>
+      <a href="{{ url_for('customer.short_stay_search', days=2) }}" class="btn btn-sm btn-outline-primary rounded-pill">2 Days (Weekend Trip)</a>
+      <a href="{{ url_for('customer.short_stay_search', days=3) }}" class="btn btn-sm btn-outline-primary rounded-pill">3 Days (Long Weekend)</a>
+      <a href="{{ url_for('customer.short_stay_search', days=7) }}" class="btn btn-sm btn-outline-primary rounded-pill">1 Week (7 Days)</a>
+      <a href="{{ url_for('customer.short_stay_search', days=15) }}" class="btn btn-sm btn-outline-primary rounded-pill">15 Days (Sprint / Exam)</a>
+      <a href="{{ url_for('customer.short_stay_search') }}" class="btn btn-sm btn-outline-secondary rounded-pill">Custom Dates</a>
+    </div>
+
+    <!-- Quick Search Widget for Short Stays -->
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-4 mb-4">
+      <form action="{{ url_for('customer.short_stay_search') }}" method="GET">
+        <div class="row g-3 align-items-end">
+          <div class="col-lg-3 col-md-6">
+            <label class="form-label small fw-bold text-secondary mb-1">
+              <i class="bi bi-geo-alt text-primary"></i> Locality / Tech Park
+            </label>
+            <select name="locality" class="form-select form-select-sm">
+              <option value="">All Bengaluru Areas</option>
+              {% for loc in popular_localities %}
+                <option value="{{ loc.name }}">{{ loc.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-lg-3 col-md-6">
+            <label class="form-label small fw-bold text-secondary mb-1">
+              <i class="bi bi-calendar-event text-primary"></i> Check-in Date
+            </label>
+            <input type="date" name="check_in" class="form-control form-control-sm" id="hp_check_in">
+          </div>
+
+          <div class="col-lg-2 col-md-6">
+            <label class="form-label small fw-bold text-secondary mb-1">
+              <i class="bi bi-calendar-check text-primary"></i> Check-out Date
+            </label>
+            <input type="date" name="check_out" class="form-control form-control-sm" id="hp_check_out">
+          </div>
+
+          <div class="col-lg-2 col-md-6">
+            <label class="form-label small fw-bold text-secondary mb-1">
+              <i class="bi bi-people text-primary"></i> Guests / Friends
+            </label>
+            <select name="guests" class="form-select form-select-sm">
+              <option value="1">1 Guest</option>
+              <option value="2">2 Friends</option>
+              <option value="3">3 Friends</option>
+              <option value="4">4 Friends</option>
+              <option value="5">5+ Group</option>
+            </select>
+          </div>
+
+          <div class="col-lg-2 col-md-12">
+            <button type="submit" class="btn btn-primary btn-sm w-100 rounded-pill fw-bold py-2">
+              <i class="bi bi-search me-1"></i> Find Short Stay
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Short Stay Properties Row -->
+    <div class="row g-4">
+      {% for prop in short_stay_properties %}
+        {% set cfg = prop.short_stay_config %}
+        {% set fresh = get_freshness_status(prop) %}
+        <div class="col-lg-4 col-md-6">
+          <div class="property-card h-100 bg-white">
+            <div class="property-card-media">
+              <img src="{{ prop.cover_image }}" alt="{{ prop.name }}" class="property-card-img" loading="lazy">
+              <div class="card-top-badges">
+                <span class="badge bg-dark bg-opacity-75 text-white rounded-pill px-2 py-1 small">
+                  <i class="bi bi-lightning-fill text-warning"></i> Short Stay
+                </span>
+                <button type="button" class="fav-btn-circle fav-btn-action" data-property-id="{{ prop.id }}">
+                  <i class="bi bi-heart"></i>
+                </button>
+              </div>
+              <div class="card-bottom-badges">
+                <span class="badge-gender badge-gender-{{ prop.gender_policy }}">{{ prop.gender_policy | capitalize }}</span>
+                {% if cfg and cfg.weekly_discount_percent > 0 %}
+                  <span class="badge bg-success text-white rounded-pill px-2 py-1 small">
+                    {{ cfg.weekly_discount_percent }}% OFF (7+ days)
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="property-card-body d-flex flex-column">
+              <div class="property-card-locality">
+                <i class="bi bi-geo-alt-fill"></i> {{ prop.locality }}
+                {% if prop.metro_distance_km %}
+                  <span class="text-secondary small ms-auto">• {{ prop.metro_distance_km }}km metro</span>
+                {% endif %}
+              </div>
+
+              <h4 class="property-card-title">
+                <a href="{{ url_for('customer.property_detail', slug=prop.slug) }}">{{ prop.name }}</a>
+              </h4>
+
+              <div class="bg-light p-2 rounded-3 small text-secondary mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                  <span><i class="bi bi-people-fill text-primary me-1"></i> Permitted Guests:</span>
+                  <strong class="text-dark">Up to {{ cfg.max_guests_allowed if cfg else 4 }}</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                  <span><i class="bi bi-door-open-fill text-success me-1"></i> Available Beds:</span>
+                  <strong class="text-success">{{ prop.total_vacant_beds }} beds</strong>
+                </div>
+              </div>
+
+              <div class="property-card-footer mt-auto pt-2 border-top">
+                <div class="price-container">
+                  <span class="price-sub">Starting From</span>
+                  <div class="price-main text-primary">
+                    {{ cfg.daily_rate | inr if cfg else prop.starting_price | inr }}
+                    <span class="fs-7 text-muted">/ night</span>
+                  </div>
+                </div>
+                <a href="{{ url_for('customer.property_detail', slug=prop.slug) }}#shortStayWidget" class="btn btn-primary btn-sm px-3 fw-bold rounded-pill">
+                  Book Stay
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Recently Confirmed Availability -->
+<section class="py-5 bg-white border-top border-bottom">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+      <div>
+        <span class="text-success fw-bold text-uppercase fs-7 letter-spacing-1">Live Updates</span>
+        <h2 class="fw-bold mb-1">Recently Confirmed Availability</h2>
+        <p class="text-secondary small mb-0">PG owners who re-confirmed their room vacancies and rates</p>
+      </div>
+      <a href="{{ url_for('customer.search', sort_by='freshness') }}" class="btn btn-outline-success btn-sm rounded-pill px-3 fw-bold">
+        Sort by Freshness <i class="bi bi-arrow-right ms-1"></i>
+      </a>
+    </div>
+
+    <div class="row g-4">
+      {% for prop in recently_confirmed %}
+        {% set fresh = get_freshness_status(prop) %}
+        <div class="col-lg-4 col-md-6">
+          <div class="property-card">
+            <div class="property-card-media">
+              <img src="{{ prop.cover_image }}" alt="{{ prop.name }}" class="property-card-img" loading="lazy">
+              <div class="card-top-badges">
+                <span class="{{ fresh.availability.badge_class }}">
+                  <i class="bi bi-clock-history"></i> {{ fresh.availability.time_ago }}
+                </span>
+                <button type="button" class="fav-btn-circle fav-btn-action" data-property-id="{{ prop.id }}">
+                  <i class="bi bi-heart"></i>
+                </button>
+              </div>
+              <div class="card-bottom-badges">
+                <span class="badge-gender badge-gender-{{ prop.gender_policy }}">{{ prop.gender_policy | capitalize }}</span>
+              </div>
+            </div>
+
+            <div class="property-card-body">
+              <div class="property-card-locality">
+                <i class="bi bi-geo-alt-fill"></i> {{ prop.locality }}
+              </div>
+              <h4 class="property-card-title">
+                <a href="{{ url_for('customer.property_detail', slug=prop.slug) }}">{{ prop.name }}</a>
+              </h4>
+              <div class="property-meta-row">
+                <span class="vacant-beds-pill">
+                  <i class="bi bi-check2"></i> {{ prop.total_vacant_beds }} beds vacant
+                </span>
+                <span class="text-muted small">Updated {{ fresh.availability.time_ago }}</span>
+              </div>
+
+              <div class="property-card-footer mt-auto">
+                <div class="price-container">
+                  <span class="price-sub">Starts From</span>
+                  <div class="price-main">{{ prop.starting_price | inr }} <span>/ mo</span></div>
+                </div>
+                <a href="{{ url_for('customer.property_detail', slug=prop.slug) }}" class="btn btn-primary btn-sm px-3 fw-bold">
+                  View Details
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="py-5 bg-light">
+  <div class="container text-center py-3">
+    <span class="text-primary fw-bold text-uppercase fs-7 letter-spacing-1">Simple & Reliable</span>
+    <h2 class="fw-bold mb-4">How PG Finder Works for Renters</h2>
+
+    <div class="row g-4 mt-2">
+      <div class="col-md-4">
+        <div class="card border-0 rounded-4 p-4 shadow-sm h-100 bg-white">
+          <div class="brand-icon-badge mx-auto mb-3" style="width:60px; height:60px; font-size:1.75rem;">
+            <i class="bi bi-search"></i>
+          </div>
+          <h5 class="fw-bold">1. Search & Filter</h5>
+          <p class="text-secondary small mb-0">
+            Search by locality, proximity to your tech park, monthly budget, room sharing, and dietary preference (veg / non-veg).
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card border-0 rounded-4 p-4 shadow-sm h-100 bg-white">
+          <div class="brand-icon-badge mx-auto mb-3" style="width:60px; height:60px; font-size:1.75rem; background:linear-gradient(135deg, #0d9488, #059669);">
+            <i class="bi bi-clipboard2-check"></i>
+          </div>
+          <h5 class="fw-bold">2. Check Live Freshness</h5>
+          <p class="text-secondary small mb-0">
+            Inspect verified room photos, transparent weekly food schedules, deposit refund policies, and real-time bed vacancies.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card border-0 rounded-4 p-4 shadow-sm h-100 bg-white">
+          <div class="brand-icon-badge mx-auto mb-3" style="width:60px; height:60px; font-size:1.75rem; background:linear-gradient(135deg, #6366f1, #4f46e5);">
+            <i class="bi bi-calendar-event"></i>
+          </div>
+          <h5 class="fw-bold">3. Schedule a Visit Directly</h5>
+          <p class="text-secondary small mb-0">
+            Send an instant enquiry or book a morning/evening visit slot directly with the PG owner without paying any middleman commission.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Owner CTA Banner -->
+<section class="py-5" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white;">
+  <div class="container py-3">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-8">
+        <span class="badge bg-primary-subtle text-primary fw-bold mb-2">FOR BENGALURU PG OWNERS</span>
+        <h2 class="fw-bold text-white mb-2">Are You a PG Owner or Property Manager?</h2>
+        <p class="text-slate-300 mb-0" style="color: #cbd5e1;">
+          List your property on PG Finder for 100% free. Receive direct enquiries from verified working professionals, easily manage your bed vacancies, and update your food menus with zero friction.
+        </p>
+      </div>
+      <div class="col-lg-4 text-lg-end">
+        <a href="{{ url_for('auth.register', role='owner') }}" class="btn btn-primary btn-lg rounded-pill px-4 fw-bold shadow">
+          <i class="bi bi-plus-circle me-1"></i> List Your PG Free
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
