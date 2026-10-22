@@ -1,64 +1,502 @@
 {% extends 'base.html' %}
 
-{% block title %}Sign In — PG Finder Bengaluru{% endblock %}
+{% block title %}Welcome to PG Finder{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<div class="container py-4 py-md-5">
   <div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-      <div class="card border-0 rounded-4 shadow-lg p-4 p-md-5 bg-white">
+    <div class="col-md-7 col-lg-5">
+      
+      <!-- Main Auth Card -->
+      <div class="card border-0 rounded-4 shadow-lg p-4 p-md-5 bg-white position-relative overflow-hidden">
+        
+        <!-- Header Branding -->
         <div class="text-center mb-4">
-          <div class="brand-icon-badge mx-auto mb-3" style="width:50px; height:50px; font-size:1.5rem;">
-            <i class="bi bi-person-fill"></i>
+          <div class="brand-icon-badge mx-auto mb-3 shadow-sm d-flex align-items-center justify-content-center" 
+               style="width: 58px; height: 58px; font-size: 1.75rem; border-radius: 16px; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white;">
+            <i class="bi bi-houses-fill"></i>
           </div>
-          <h3 class="fw-bold mb-1">Welcome Back</h3>
-          <p class="text-secondary small">Sign in to manage your enquiries, saved PGs or listings</p>
+          <h2 class="fw-bold mb-1 text-dark tracking-tight">Welcome to PG Finder</h2>
+          <p class="text-secondary small mb-0">Find your perfect PG, room, and stay in Bengaluru.</p>
         </div>
 
-        <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
-          {{ form.hidden_tag() }}
+        <!-- Global Alert Box -->
+        <div id="authAlert" class="alert alert-danger d-none rounded-3 py-2 px-3 small d-flex align-items-center gap-2 mb-3" role="alert">
+          <i class="bi bi-exclamation-circle-fill flex-shrink-0"></i>
+          <span id="authAlertMsg"></span>
+        </div>
 
-          <div class="mb-3">
-            <label class="form-label fw-bold small">Email Address</label>
-            {{ form.email(class="form-control form-control-lg", placeholder="name@example.com") }}
-            {% for error in form.email.errors %}
-              <div class="text-danger small mt-1">{{ error }}</div>
-            {% endfor %}
-          </div>
+        <div id="authSuccessAlert" class="alert alert-success d-none rounded-3 py-2 px-3 small d-flex align-items-center gap-2 mb-3" role="alert">
+          <i class="bi bi-check-circle-fill flex-shrink-0"></i>
+          <span id="authSuccessMsg"></span>
+        </div>
 
-          <div class="mb-3">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-              <label class="form-label fw-bold small mb-0">Password</label>
-              <a href="#" class="text-secondary small text-decoration-none">Forgot?</a>
-            </div>
-            {{ form.password(class="form-control form-control-lg", placeholder="••••••••") }}
-            {% for error in form.password.errors %}
-              <div class="text-danger small mt-1">{{ error }}</div>
-            {% endfor %}
-          </div>
-
-          <div class="mb-3 form-check">
-            {{ form.remember_me(class="form-check-input") }}
-            <label class="form-check-label small" for="remember_me">Keep me signed in</label>
-          </div>
-
-          <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold rounded-pill mb-3">
-            Sign In to PG Finder
+        <!-- Segmented Tab Selector for Primary Options -->
+        <div class="nav nav-pills nav-fill p-1 bg-light rounded-pill mb-4" id="loginTabs" role="tablist">
+          <button class="nav-link rounded-pill py-2 fw-semibold small {% if active_tab != 'email' %}active bg-white text-primary shadow-xs{% else %}text-secondary{% endif %}" 
+                  id="tab-mobile-btn" 
+                  data-bs-toggle="pill" 
+                  data-bs-target="#tab-mobile" 
+                  type="button" 
+                  role="tab">
+            <i class="bi bi-phone me-1"></i> Mobile Number
           </button>
-        </form>
-
-        <div class="bg-light p-3 rounded-3 text-center small text-secondary mb-3">
-          <strong>Demo Login Accounts:</strong><br>
-          <span class="d-block mt-1">👤 Customer: <code>rahul.tech@gmail.com</code> / <code>Customer@123</code></span>
-          <span class="d-block">🏢 Owner: <code>owner.suresh@gmail.com</code> / <code>Owner@123</code></span>
-          <span class="d-block">🛡️ Admin: <code>admin@pgfinder.in</code> / <code>Admin@123</code></span>
+          <button class="nav-link rounded-pill py-2 fw-semibold small {% if active_tab == 'email' %}active bg-white text-primary shadow-xs{% else %}text-secondary{% endif %}" 
+                  id="tab-email-btn" 
+                  data-bs-toggle="pill" 
+                  data-bs-target="#tab-email" 
+                  type="button" 
+                  role="tab">
+            <i class="bi bi-envelope me-1"></i> Email & Password
+          </button>
         </div>
 
-        <div class="text-center small text-secondary">
-          Don't have an account? <a href="{{ url_for('auth.register') }}" class="fw-bold">Create account</a>
+        <!-- Tab Contents -->
+        <div class="tab-content" id="loginTabsContent">
+          
+          <!-- ================= TAB 1: MOBILE NUMBER OTP LOGIN ================= -->
+          <div class="tab-pane fade {% if active_tab != 'email' %}show active{% endif %}" id="tab-mobile" role="tabpanel">
+            
+            <!-- Step 1: Enter Mobile Number -->
+            <div id="mobileStep1">
+              <form id="mobileSendOtpForm" onsubmit="handleSendOtp(event)">
+                <label class="form-label fw-bold small text-dark mb-1">Mobile Number</label>
+                <div class="input-group input-group-lg mb-2">
+                  <select id="mobileCountryCode" class="form-select bg-light border-end-0 fw-semibold text-dark" style="max-width: 130px; font-size: 0.95rem;">
+                    <option value="+91" selected>🇮🇳 +91</option>
+                    <option value="+1">🇺🇸 +1</option>
+                    <option value="+44">🇬🇧 +44</option>
+                    <option value="+971">🇦🇪 +971</option>
+                    <option value="+65">🇸🇬 +65</option>
+                    <option value="+61">🇦🇺 +61</option>
+                  </select>
+                  <input type="tel" 
+                         id="mobileNumberInput" 
+                         class="form-control bg-light" 
+                         placeholder="98765 43210" 
+                         maxlength="15" 
+                         required 
+                         autocomplete="tel">
+                </div>
+                <div class="form-text small text-muted mb-3">
+                  We'll send a 6-digit verification code via SMS to this number.
+                </div>
+
+                <button type="submit" id="btnSendOtp" class="btn btn-primary btn-lg w-100 fw-bold rounded-pill mb-3 shadow-sm d-flex align-items-center justify-content-center gap-2">
+                  <span id="btnSendOtpSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                  <span id="btnSendOtpText">Continue with Mobile Number</span>
+                </button>
+              </form>
+            </div>
+
+            <!-- Step 2: Enter 6-Digit OTP -->
+            <div id="mobileStep2" class="d-none">
+              <div class="text-center mb-3">
+                <div class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1 mb-2">
+                  <i class="bi bi-shield-lock me-1"></i> OTP Verification
+                </div>
+                <p class="small text-muted mb-1">Enter the 6-digit code sent to</p>
+                <div class="d-flex align-items-center justify-content-center gap-2">
+                  <strong id="displayTargetPhone" class="text-dark"></strong>
+                  <button type="button" class="btn btn-link btn-sm text-decoration-none p-0" onclick="resetToMobileStep1()">
+                    <i class="bi bi-pencil-square"></i> Change
+                  </button>
+                </div>
+              </div>
+
+              <form id="mobileVerifyOtpForm" onsubmit="handleVerifyOtp(event)">
+                <div class="mb-3">
+                  <label class="form-label fw-bold small text-dark mb-1">6-Digit Verification Code</label>
+                  <input type="text" 
+                         id="otpCodeInput" 
+                         class="form-control form-control-lg text-center letter-spacing-2 fw-bold bg-light" 
+                         placeholder="• • • • • •" 
+                         maxlength="6" 
+                         inputmode="numeric" 
+                         pattern="[0-9]*" 
+                         required 
+                         style="letter-spacing: 0.5rem; font-size: 1.4rem;">
+                </div>
+
+                <!-- Registration Fields for New Mobile Users -->
+                <div id="newMobileUserFields" class="d-none bg-light p-3 rounded-3 mb-3 border">
+                  <div class="small fw-bold text-dark mb-2">
+                    <i class="bi bi-person-plus-fill text-primary me-1"></i> Complete Your Profile
+                  </div>
+                  <div class="mb-2">
+                    <label class="form-label small text-muted mb-1">Full Name</label>
+                    <input type="text" id="newUserName" class="form-control form-control-sm" placeholder="Enter your full name">
+                  </div>
+                  <div>
+                    <label class="form-label small text-muted mb-1">I am registering as</label>
+                    <select id="newUserRole" class="form-select form-select-sm">
+                      <option value="customer" selected>Looking for PG (Customer)</option>
+                      <option value="owner">PG Owner / Property Manager</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button type="submit" id="btnVerifyOtp" class="btn btn-primary btn-lg w-100 fw-bold rounded-pill mb-3 shadow-sm d-flex align-items-center justify-content-center gap-2">
+                  <span id="btnVerifyOtpSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                  <span id="btnVerifyOtpText">Verify & Continue</span>
+                </button>
+
+                <!-- Resend OTP with Countdown -->
+                <div class="text-center small text-secondary">
+                  Didn't receive the code? 
+                  <span id="resendCountdownSpan">Resend in <strong id="resendSeconds">60</strong>s</span>
+                  <button type="button" id="btnResendOtp" class="btn btn-link btn-sm fw-bold text-decoration-none p-0 d-none" onclick="handleResendOtp()">
+                    Resend OTP
+                  </button>
+                </div>
+              </form>
+            </div>
+
+          </div>
+
+          <!-- ================= TAB 2: EMAIL & PASSWORD LOGIN ================= -->
+          <div class="tab-pane fade {% if active_tab == 'email' %}show active{% endif %}" id="tab-email" role="tabpanel">
+            <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
+              {{ form.hidden_tag() }}
+
+              <div class="mb-3">
+                <label class="form-label fw-bold small text-dark mb-1">Email Address</label>
+                {{ form.email(class="form-control form-control-lg bg-light", placeholder="name@example.com", autocomplete="email") }}
+                {% for error in form.email.errors %}
+                  <div class="text-danger small mt-1">{{ error }}</div>
+                {% endfor %}
+              </div>
+
+              <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <label class="form-label fw-bold small text-dark mb-0">Password</label>
+                  <a href="{{ url_for('auth.forgot_password') }}" class="text-primary small text-decoration-none fw-semibold">
+                    Forgot password?
+                  </a>
+                </div>
+                <div class="input-group">
+                  {{ form.password(id="emailPasswordField", class="form-control form-control-lg bg-light border-end-0", placeholder="••••••••", autocomplete="current-password") }}
+                  <button class="btn btn-light border border-start-0 text-secondary" type="button" onclick="togglePasswordVisibility('emailPasswordField', 'toggleEyeIcon')">
+                    <i id="toggleEyeIcon" class="bi bi-eye"></i>
+                  </button>
+                </div>
+                {% for error in form.password.errors %}
+                  <div class="text-danger small mt-1">{{ error }}</div>
+                {% endfor %}
+              </div>
+
+              <div class="mb-3 form-check">
+                {{ form.remember_me(class="form-check-input") }}
+                <label class="form-check-label small text-secondary" for="remember_me">Keep me signed in</label>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold rounded-pill mb-3 shadow-sm">
+                Sign In with Email
+              </button>
+            </form>
+          </div>
+
         </div>
+
+        <!-- ================= OPTION 3: GOOGLE SIGN-IN ================= -->
+        <div class="position-relative my-4">
+          <hr class="text-muted">
+          <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 small text-muted text-uppercase fw-semibold" style="font-size: 0.75rem;">
+            Or continue with
+          </span>
+        </div>
+
+        <a href="{{ url_for('auth.google_login') }}" 
+           class="btn btn-outline-secondary btn-lg w-100 rounded-pill fw-semibold small d-flex align-items-center justify-content-center gap-2 mb-3 shadow-xs">
+          <!-- Google G Logo SVG -->
+          <svg width="18" height="18" viewBox="0 0 24 24" class="flex-shrink-0">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          Continue with Google
+        </a>
+
+        <!-- Registration Link -->
+        <div class="text-center small text-secondary mt-2 mb-3">
+          New to PG Finder? 
+          <a href="{{ url_for('auth.register') }}" class="fw-bold text-primary text-decoration-none">
+            Create an Account
+          </a>
+        </div>
+
+        <!-- Guest Exploration Link -->
+        <div class="text-center small mb-3">
+          <a href="{{ url_for('customer.index', explore=1) }}" class="text-secondary text-decoration-none">
+            <i class="bi bi-compass me-1"></i> Explore Bengaluru PGs as Guest &rarr;
+          </a>
+        </div>
+
+        <!-- Demo Accounts Helper -->
+        <div class="bg-light p-3 rounded-3 small text-secondary mt-2 border">
+          <div class="fw-bold text-dark mb-1 d-flex align-items-center gap-1">
+            <i class="bi bi-shield-check text-success"></i> Instant Demo Logins:
+          </div>
+          <div class="d-flex flex-wrap gap-1 mt-2">
+            <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-1" onclick="fillDemo('rahul.tech@gmail.com', 'Customer@123', '9876543210')">
+              👤 Customer (Rahul)
+            </button>
+            <button type="button" class="btn btn-xs btn-outline-warning text-dark rounded-pill px-2 py-1" onclick="fillDemo('owner.suresh@gmail.com', 'Owner@123', '9876543211')">
+              🏢 Owner (Suresh)
+            </button>
+            <button type="button" class="btn btn-xs btn-outline-danger rounded-pill px-2 py-1" onclick="fillDemo('admin@pgfinder.in', 'Admin@123', '9876543213')">
+              🛡️ Admin
+            </button>
+          </div>
+        </div>
+
+        <!-- Legal Links -->
+        <div class="text-center text-muted small mt-4" style="font-size: 0.75rem;">
+          By continuing, you agree to PG Finder's 
+          <a href="#" class="text-decoration-none text-muted fw-semibold">Terms of Service</a> & 
+          <a href="#" class="text-decoration-none text-muted fw-semibold">Privacy Policy</a>.
+        </div>
+
       </div>
+
     </div>
   </div>
 </div>
+
+<script>
+let resendTimer = null;
+let currentPhoneE164 = '';
+let currentLocal10 = '';
+
+function togglePasswordVisibility(fieldId, iconId) {
+  const field = document.getElementById(fieldId);
+  const icon = document.getElementById(iconId);
+  if (field.type === 'password') {
+    field.type = 'text';
+    icon.classList.remove('bi-eye');
+    icon.classList.add('bi-eye-slash');
+  } else {
+    field.type = 'password';
+    icon.classList.remove('bi-eye-slash');
+    icon.classList.add('bi-eye');
+  }
+}
+
+function fillDemo(email, pwd, phone) {
+  // Fill email form
+  const emailInput = document.querySelector('input[name="email"]');
+  const pwdInput = document.getElementById('emailPasswordField');
+  if (emailInput && pwdInput) {
+    emailInput.value = email;
+    pwdInput.value = pwd;
+  }
+  // Fill mobile input
+  const mobInput = document.getElementById('mobileNumberInput');
+  if (mobInput) {
+    mobInput.value = phone;
+  }
+  // Switch to email tab
+  const emailTab = new bootstrap.Tab(document.getElementById('tab-email-btn'));
+  emailTab.show();
+}
+
+function showAuthAlert(msg) {
+  const alertBox = document.getElementById('authAlert');
+  const alertMsg = document.getElementById('authAlertMsg');
+  alertMsg.textContent = msg;
+  alertBox.classList.remove('d-none');
+  document.getElementById('authSuccessAlert').classList.add('d-none');
+}
+
+function showAuthSuccess(msg) {
+  const alertBox = document.getElementById('authSuccessAlert');
+  const alertMsg = document.getElementById('authSuccessMsg');
+  alertMsg.textContent = msg;
+  alertBox.classList.remove('d-none');
+  document.getElementById('authAlert').classList.add('d-none');
+}
+
+function hideAuthAlerts() {
+  document.getElementById('authAlert').classList.add('d-none');
+  document.getElementById('authSuccessAlert').classList.add('d-none');
+}
+
+function resetToMobileStep1() {
+  hideAuthAlerts();
+  if (resendTimer) clearInterval(resendTimer);
+  document.getElementById('mobileStep1').classList.remove('d-none');
+  document.getElementById('mobileStep2').classList.add('d-none');
+  document.getElementById('otpCodeInput').value = '';
+}
+
+function startResendCountdown(seconds) {
+  let remaining = seconds;
+  const countdownSpan = document.getElementById('resendCountdownSpan');
+  const resendSeconds = document.getElementById('resendSeconds');
+  const btnResend = document.getElementById('btnResendOtp');
+
+  countdownSpan.classList.remove('d-none');
+  btnResend.classList.add('d-none');
+  resendSeconds.textContent = remaining;
+
+  if (resendTimer) clearInterval(resendTimer);
+
+  resendTimer = setInterval(() => {
+    remaining--;
+    resendSeconds.textContent = remaining;
+    if (remaining <= 0) {
+      clearInterval(resendTimer);
+      countdownSpan.classList.add('d-none');
+      btnResend.classList.remove('d-none');
+    }
+  }, 1000);
+}
+
+async function handleSendOtp(event) {
+  event.preventDefault();
+  hideAuthAlerts();
+
+  const countryCode = document.getElementById('mobileCountryCode').value;
+  const mobileNumber = document.getElementById('mobileNumberInput').value.trim();
+
+  if (!mobileNumber) {
+    showAuthAlert("Please enter a valid mobile number.");
+    return;
+  }
+
+  const spinner = document.getElementById('btnSendOtpSpinner');
+  const btnText = document.getElementById('btnSendOtpText');
+  const btn = document.getElementById('btnSendOtp');
+
+  spinner.classList.remove('d-none');
+  btnText.textContent = "Sending OTP...";
+  btn.disabled = true;
+
+  try {
+    const res = await fetch("{{ url_for('auth.mobile_send_otp') }}", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ country_code: countryCode, mobile_number: mobileNumber })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      currentPhoneE164 = data.phone_e164;
+      currentLocal10 = data.local_10;
+      document.getElementById('displayTargetPhone').textContent = data.phone_e164;
+      document.getElementById('mobileStep1').classList.add('d-none');
+      document.getElementById('mobileStep2').classList.remove('d-none');
+      showAuthSuccess(data.message || "OTP code sent successfully!");
+
+      // If development/test mode provided an OTP for demonstration
+      if (data.dev_otp) {
+        document.getElementById('otpCodeInput').value = data.dev_otp;
+      }
+
+      startResendCountdown(data.cooldown_seconds || 60);
+      document.getElementById('otpCodeInput').focus();
+    } else {
+      showAuthAlert(data.error || "Unable to send verification OTP.");
+    }
+  } catch (err) {
+    showAuthAlert("Network connection error. Please check your connection and try again.");
+  } finally {
+    spinner.classList.add('d-none');
+    btnText.textContent = "Continue with Mobile Number";
+    btn.disabled = false;
+  }
+}
+
+async function handleResendOtp() {
+  hideAuthAlerts();
+  const countryCode = document.getElementById('mobileCountryCode').value;
+  const mobileNumber = document.getElementById('mobileNumberInput').value.trim();
+
+  try {
+    const res = await fetch("{{ url_for('auth.mobile_send_otp') }}", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ country_code: countryCode, mobile_number: mobileNumber })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      showAuthSuccess("A fresh verification code has been dispatched.");
+      if (data.dev_otp) {
+        document.getElementById('otpCodeInput').value = data.dev_otp;
+      }
+      startResendCountdown(data.cooldown_seconds || 60);
+    } else {
+      showAuthAlert(data.error || "Failed to resend OTP.");
+    }
+  } catch (err) {
+    showAuthAlert("Error resending OTP. Please try again.");
+  }
+}
+
+async function handleVerifyOtp(event) {
+  event.preventDefault();
+  hideAuthAlerts();
+
+  const countryCode = document.getElementById('mobileCountryCode').value;
+  const mobileNumber = document.getElementById('mobileNumberInput').value.trim();
+  const otpCode = document.getElementById('otpCodeInput').value.trim();
+  const name = document.getElementById('newUserName').value.trim();
+  const role = document.getElementById('newUserRole').value;
+
+  if (otpCode.length !== 6) {
+    showAuthAlert("Please enter the full 6-digit OTP code.");
+    return;
+  }
+
+  const spinner = document.getElementById('btnVerifyOtpSpinner');
+  const btnText = document.getElementById('btnVerifyOtpText');
+  const btn = document.getElementById('btnVerifyOtp');
+
+  spinner.classList.remove('d-none');
+  btnText.textContent = "Verifying...";
+  btn.disabled = true;
+
+  try {
+    const res = await fetch("{{ url_for('auth.mobile_verify_otp') }}", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        country_code: countryCode,
+        mobile_number: mobileNumber,
+        otp_code: otpCode,
+        name: name,
+        role: role
+      })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      if (data.requires_registration) {
+        // Phone verified, show name & role fields
+        document.getElementById('newMobileUserFields').classList.remove('d-none');
+        showAuthSuccess(data.message || "Phone verified! Enter your name to complete signup.");
+        document.getElementById('btnVerifyOtpText').textContent = "Complete Registration & Sign In";
+        document.getElementById('newUserName').focus();
+      } else if (data.redirect_url) {
+        showAuthSuccess(data.message || "Authentication successful! Redirecting...");
+        window.location.href = data.redirect_url;
+      }
+    } else {
+      showAuthAlert(data.error || "Invalid OTP code. Please try again.");
+    }
+  } catch (err) {
+    showAuthAlert("Network verification error. Please try again.");
+  } finally {
+    spinner.classList.add('d-none');
+    if (!document.getElementById('newMobileUserFields').classList.contains('d-none')) {
+      btnText.textContent = "Complete Registration & Sign In";
+    } else {
+      btnText.textContent = "Verify & Continue";
+    }
+    btn.disabled = false;
+  }
+}
+</script>
 {% endblock %}

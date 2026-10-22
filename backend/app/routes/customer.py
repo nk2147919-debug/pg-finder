@@ -49,6 +49,11 @@ POPULAR_LOCALITIES = [
 
 @customer_bp.route('/')
 def index():
+    if not current_user.is_authenticated and not request.args.get('explore') and not session.get('guest_browsing'):
+        return redirect(url_for('auth.login'))
+    if request.args.get('explore'):
+        session['guest_browsing'] = True
+
     # Fetch featured and recently confirmed properties
     featured_properties = Property.query.filter_by(status='approved', is_featured=True).limit(6).all()
     if not featured_properties:

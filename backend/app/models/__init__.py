@@ -7,6 +7,7 @@ from app.models.short_stay import ShortStayConfig, ShortStayBooking, ShortStayGu
 from app.models.gym import GymFacility, GymPhoto
 from app.models.roommate import RoommateProfile, RoommateInterest, RoommateRequest, UserBlock, UserReport
 from app.models.community import PGResident, PGCommunityPost, PGCommunityComment, PGCommunityReport
+from app.models.otp import OTPVerification
 
 __all__ = [
     'User',
@@ -40,4 +41,5 @@ __all__ = [
     'PGCommunityPost',
     'PGCommunityComment',
     'PGCommunityReport',
+    'OTPVerification',
 ]
