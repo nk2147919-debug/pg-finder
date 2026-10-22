@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-layout">
+  <!-- Admin Sidebar -->
+  <aside class="dashboard-sidebar bg-dark">
+    <div class="d-flex align-items-center gap-2 mb-4 px-2">
+      <div class="brand-icon-badge" style="width:32px; height:32px; font-size:1rem; background:linear-gradient(135deg, #e11d48, #be123c);">
+        <i class="bi bi-shield-lock-fill"></i>
+      </div>
+      <div>
+        <h6 class="text-white mb-0 fw-bold">Admin Portal</h6>
+        <span class="text-danger small fw-bold">Moderator Panel</span>
+      </div>
+    </div>
+
+    <div class="sidebar-heading text-slate-400">Platform Management</div>
+    <a href="{{ url_for('admin.dashboard') }}" class="sidebar-nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+      <i class="bi bi-speedometer2"></i> Dashboard Overview
+    </a>
+    <a href="{{ url_for('admin.listings_queue') }}" class="sidebar-nav-link {% if request.endpoint == 'admin.listings_queue' %}active{% endif %}">
+      <i class="bi bi-check2-square"></i> Listing Approvals
+    </a>
+    <a href="{{ url_for('admin.users') }}" class="sidebar-nav-link {% if request.endpoint == 'admin.users' %}active{% endif %}">
+      <i class="bi bi-people"></i> User Accounts
+    </a>
+
+    <div class="sidebar-heading text-slate-400">Moderation & Quality</div>
+    <a href="{{ url_for('admin.reviews') }}" class="sidebar-nav-link {% if request.endpoint == 'admin.reviews' %}active{% endif %}">
+      <i class="bi bi-star"></i> Review Moderation
+    </a>
+    <a href="{{ url_for('admin.complaints') }}" class="sidebar-nav-link {% if request.endpoint == 'admin.complaints' %}active{% endif %}">
+      <i class="bi bi-flag"></i> Reports & Complaints
+    </a>
+    <a href="{{ url_for('admin.stale_alerts') }}" class="sidebar-nav-link {% if request.endpoint == 'admin.stale_alerts' %}active{% endif %}">
+      <i class="bi bi-exclamation-triangle"></i> Stale Availability Alerts
+    </a>
+
+    <div class="mt-auto pt-4 border-top border-secondary">
+      <a href="{{ url_for('customer.index') }}" class="sidebar-nav-link text-info">
+        <i class="bi bi-arrow-left-circle"></i> View Live Site
+      </a>
+    </div>
+  </aside>
+
+  <!-- Admin Main Body -->
+  <main class="dashboard-main">
+    {% block admin_content %}{% endblock %}
+  </main>
+</div>
+{% endblock %}

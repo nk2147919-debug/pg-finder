@@ -1,0 +1,226 @@
+{% extends 'owner/base_owner.html' %}
+
+{% block title %}Shared Rooms & Community Management | Owner Portal{% endblock %}
+
+{% block owner_content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="fw-bold mb-1">Shared Rooms & PG Community Management</h3>
+    <p class="text-secondary small mb-0">Review shared occupancy requests, check bed limits, approve roommate arrangements, and broadcast resident notices.</p>
+  </div>
+  <button class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#ownerAnnouncementModal">
+    <i class="bi bi-megaphone me-1"></i> Post Resident Announcement
+  </button>
+</div>
+
+<!-- Occupancy Limits & Vacant Beds Overview -->
+<div class="row g-3 mb-4">
+  {% for p_stat in property_stats %}
+    <div class="col-md-6 col-xl-4">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <h6 class="fw-bold mb-0 text-dark">{{ p_stat.property.name }}</h6>
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill">
+              {{ p_stat.active_residents_count }} Active Residents
+            </span>
+          </div>
+          <small class="text-muted d-block mb-3"><i class="bi bi-geo-alt"></i> {{ p_stat.property.locality }}</small>
+
+          <div class="mb-2">
+            <div class="d-flex justify-content-between small text-muted mb-1">
+              <span>Total Vacant Beds:</span>
+              <strong class="{% if p_stat.total_vacant > 0 %}text-success{% else %}text-danger{% endif %}">{{ p_stat.total_vacant }} beds</strong>
+            </div>
+            {% for r in p_stat.rooms %}
+              <div class="d-flex justify-content-between align-items-center small py-1 border-bottom">
+                <span>{{ r.room_type|capitalize }} Room:</span>
+                <span>
+                  <strong class="text-dark">{{ r.occupied_beds }}</strong> / {{ r.total_beds }} occupied
+                  <span class="badge {% if r.vacant_beds > 0 %}bg-success{% else %}bg-danger{% endif %} ms-1" style="font-size: 10px;">
+                    {{ r.vacant_beds }} vacant
+                  </span>
+                </span>
+              </div>
+            {% endfor %}
+          </div>
+
+          <div class="mt-3 pt-2">
+            <a href="{{ url_for('customer.pg_community_board', property_id=p_stat.property.id) }}" class="btn btn-sm btn-outline-secondary rounded-pill w-100">
+              <i class="bi bi-chat-left-text me-1"></i> View Resident Board
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<!-- Shared Room Requests Management -->
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+  <div class="card-header bg-white border-0 p-4 pb-0 d-flex flex-wrap justify-content-between align-items-center">
+    <h5 class="fw-bold mb-0">Shared-Room Occupancy Applications</h5>
+    <div class="d-flex gap-2 mt-2 mt-md-0">
+      <a href="{{ url_for('owner.manage_shared_rooms') }}" class="btn btn-sm rounded-pill {% if not status_filter %}btn-dark{% else %}btn-outline-secondary{% endif %}">
+        All
+      </a>
+      <a href="{{ url_for('owner.manage_shared_rooms', status='accepted') }}" class="btn btn-sm rounded-pill {% if status_filter == 'accepted' %}btn-warning text-dark{% else %}btn-outline-warning text-dark{% endif %}">
+        Pending Owner Approval
+      </a>
+      <a href="{{ url_for('owner.manage_shared_rooms', status='owner_approved') }}" class="btn btn-sm rounded-pill {% if status_filter == 'owner_approved' %}btn-success{% else %}btn-outline-success{% endif %}">
+        Approved
+      </a>
+      <a href="{{ url_for('owner.manage_shared_rooms', status='rejected') }}" class="btn btn-sm rounded-pill {% if status_filter == 'rejected' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+        Rejected
+      </a>
+    </div>
+  </div>
+
+  <div class="card-body p-4">
+    {% if not shared_requests %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-people display-4 d-block mb-3 opacity-50"></i>
+        <h6>No Shared Room Requests Found</h6>
+        <p class="small mb-0">When roommates agree to share a room in your PG, requests will appear here for your review and occupancy verification.</p>
+      </div>
+    {% else %}
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Property & Room</th>
+              <th>Applicants (Roommates)</th>
+              <th>Proposed Split Rent</th>
+              <th>Status</th>
+              <th>Verification & Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for req in shared_requests %}
+              <tr>
+                <td>
+                  <strong>{{ req.property.name if req.property else 'N/A' }}</strong>
+                  {% if req.room_type %}
+                    <div class="small text-muted">{{ req.room_type.sharing_type|capitalize }} Room ({{ req.room_type.vacant_beds }} vacant beds left)</div>
+                  {% endif %}
+                </td>
+                <td>
+                  <div><i class="bi bi-person me-1 text-primary"></i> <strong>{{ req.sender.name }}</strong> (Sender)</div>
+                  <div><i class="bi bi-person me-1 text-success"></i> <strong>{{ req.receiver.name }}</strong> (Partner)</div>
+                  {% if req.message %}
+                    <small class="text-muted d-block mt-1">"{{ req.message }}"</small>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if req.proposed_split_rent %}
+                    <strong class="text-success">₹{{ "{:,.0f}".format(req.proposed_split_rent) }}</strong> <small class="text-muted">/ month</small>
+                  {% else %}
+                    <span class="text-muted">Standard rate</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge {% if req.status == 'owner_approved' %}bg-success{% elif req.status == 'rejected' %}bg-danger{% elif req.status == 'accepted' %}bg-warning text-dark{% else %}bg-secondary{% endif %} rounded-pill px-3 py-2">
+                    {% if req.status == 'accepted' %}Pending Owner Approval{% else %}{{ req.status|replace('_', ' ')|capitalize }}{% endif %}
+                  </span>
+                  {% if req.owner_notes %}
+                    <small class="text-muted d-block mt-1">{{ req.owner_notes }}</small>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if req.status == 'accepted' %}
+                    <div class="d-flex gap-2">
+                      <form action="{{ url_for('owner.handle_shared_room_request', request_id=req.id, action='approve') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-success rounded-pill px-3" onclick="return confirm('Verify that bed occupancy limit is not exceeded before approving. Confirm approval?');">
+                          <i class="bi bi-check-lg me-1"></i> Verify & Approve
+                        </button>
+                      </form>
+
+                      <button class="btn btn-sm btn-outline-danger rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#rejectModal{{ req.id }}">
+                        <i class="bi bi-x-lg me-1"></i> Reject
+                      </button>
+                    </div>
+
+                    <!-- Reject Modal -->
+                    <div class="modal fade" id="rejectModal{{ req.id }}" tabindex="-1" aria-hidden="true">
+                      <div class="modal-dialog">
+                        <div class="modal-content rounded-4 border-0">
+                          <div class="modal-header border-0">
+                            <h5 class="modal-title fw-bold">Reject Shared-Room Arrangement</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <form action="{{ url_for('owner.handle_shared_room_request', request_id=req.id, action='reject') }}" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="modal-body">
+                              <div class="mb-3">
+                                <label class="form-label fw-semibold">Reason for Declining (Sent to applicants)</label>
+                                <textarea name="reason" class="form-control rounded-3" rows="3" placeholder="e.g. Room has already reached full capacity / Property house rules..."></textarea>
+                              </div>
+                            </div>
+                            <div class="modal-footer border-0">
+                              <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                              <button type="submit" class="btn btn-danger rounded-pill px-4">Confirm Rejection</button>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+
+                  {% else %}
+                    <span class="text-muted small">Completed</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Owner Broadcast Announcement Modal -->
+<div class="modal fade" id="ownerAnnouncementModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content rounded-4 border-0">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold"><i class="bi bi-megaphone me-2 text-primary"></i> Broadcast Announcement to PG Residents</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="ownerAnnouncementForm" action="" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Select PG Property</label>
+            <select id="announcementPropertySelect" class="form-select rounded-pill" required onchange="updateAnnouncementAction(this.value)">
+              <option value="" disabled selected>Choose property...</option>
+              {% for p in properties %}
+                <option value="{{ p.id }}">{{ p.name }} ({{ p.locality }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Announcement Title</label>
+            <input type="text" name="title" class="form-control rounded-pill" placeholder="e.g. Scheduled Water Tank Cleaning on Saturday 10 AM" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Announcement Content</label>
+            <textarea name="content" class="form-control rounded-3" rows="5" placeholder="Detail any utility timings, visitor regulations, curfew guidelines, or event updates..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Broadcast Notice</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function updateAnnouncementAction(propertyId) {
+  const form = document.getElementById('ownerAnnouncementForm');
+  form.action = `/owner/property/${propertyId}/community/announcement`;
+}
+</script>
+{% endblock %}

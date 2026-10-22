@@ -1,0 +1,159 @@
+{% extends 'owner/base_owner.html' %}
+
+{% block title %}Short-Stay Configuration — {{ property.name }}{% endblock %}
+
+{% block owner_content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div>
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <a href="{{ url_for('owner.properties') }}" class="btn btn-outline-secondary btn-sm rounded-pill">
+        <i class="bi bi-arrow-left"></i> Properties
+      </a>
+      <span class="status-pill status-{{ property.status }}">{{ property.status | capitalize }}</span>
+      {% if config.is_enabled %}
+        <span class="badge bg-success rounded-pill px-3 py-1 small">
+          <i class="bi bi-lightning-fill"></i> Short Stay Active
+        </span>
+      {% else %}
+        <span class="badge bg-secondary rounded-pill px-3 py-1 small">
+          Short Stay Disabled
+        </span>
+      {% endif %}
+    </div>
+    <h2 class="fw-bold mb-0">Short-Stay Settings: {{ property.name }}</h2>
+    <span class="text-secondary small">Configure daily/weekly pricing, permitted guest count, stay rules, and instant booking terms.</span>
+  </div>
+
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('owner.manage_calendar', property_id=property.id) }}" class="btn btn-outline-primary rounded-pill px-3 fw-bold">
+      <i class="bi bi-calendar3 me-1"></i> Block / Manage Calendar
+    </a>
+    <a href="{{ url_for('customer.property_detail', slug=property.slug) }}" target="_blank" class="btn btn-outline-secondary rounded-pill px-3">
+      <i class="bi bi-box-arrow-up-right me-1"></i> Public View
+    </a>
+  </div>
+</div>
+
+<div class="card border-0 rounded-4 shadow-sm bg-white p-4 p-md-5">
+  <form action="{{ url_for('owner.manage_short_stay', property_id=property.id) }}" method="POST">
+    {{ form.hidden_tag() }}
+
+    <!-- Master Switch -->
+    <div class="p-4 rounded-4 bg-light border mb-4">
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          <h5 class="fw-bold mb-1"><i class="bi bi-power text-primary me-2"></i>Enable Short-Stay & Friends Bookings</h5>
+          <p class="text-secondary small mb-0">
+            When enabled, customers can discover this property on the Short-Stay page, calculate quotes, and send booking requests.
+          </p>
+        </div>
+        <div class="form-check form-switch fs-4">
+          {{ form.is_enabled(class="form-check-input", id="shortStayToggle") }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Pricing Structure -->
+    <div class="mb-4">
+      <h5 class="fw-bold mb-3"><i class="bi bi-cash-coin text-primary me-2"></i>Pricing & Duration Rates</h5>
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label fw-bold small">Base Per-Night Rate (₹) *</label>
+          {{ form.daily_rate(class="form-control", placeholder="e.g. 750") }}
+          <div class="form-text small">Standard rate per night</div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold small">Discounted Weekly Rate (₹ for 7 nights)</label>
+          {{ form.weekly_rate(class="form-control", placeholder="e.g. 4500") }}
+          <div class="form-text small">Flat rate for 7+ nights (optional)</div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold small">Discounted 15-Day Rate (₹)</label>
+          {{ form.fortnightly_rate(class="form-control", placeholder="e.g. 8500") }}
+          <div class="form-text small">Flat rate for 14-15 nights (optional)</div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold small">Extra-Guest Charge / Night (₹)</label>
+          {{ form.extra_guest_charge(class="form-control", placeholder="e.g. 250") }}
+          <div class="form-text small">Per additional friend per night</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Occupancy & Stay Limits -->
+    <div class="mb-4">
+      <h5 class="fw-bold mb-3"><i class="bi bi-people text-primary me-2"></i>Occupancy & Stay Limits</h5>
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label fw-bold small">Base Guests Included *</label>
+          {{ form.base_guests(class="form-control") }}
+          <div class="form-text small">Included in base daily rate</div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold small">Permitted Occupancy (Max Guests) *</label>
+          {{ form.max_guests(class="form-control") }}
+          <div class="form-text small">Max friends allowed in 1 booking</div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold small">Minimum Stay (Nights) *</label>
+          {{ form.min_nights(class="form-control") }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold small">Maximum Stay (Nights) *</label>
+          {{ form.max_nights(class="form-control") }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Check-in Times & Deposits -->
+    <div class="mb-4">
+      <h5 class="fw-bold mb-3"><i class="bi bi-shield-check text-primary me-2"></i>Deposits, Fees & Timings</h5>
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label fw-bold small">Check-in Time *</label>
+          {{ form.check_in_time(class="form-control", placeholder="e.g. 12:00 PM") }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold small">Check-out Time *</label>
+          {{ form.check_out_time(class="form-control", placeholder="e.g. 11:00 AM") }}
+        </div>
+        <div class="col-md-2">
+          <label class="form-label fw-bold small">Security Deposit (₹)</label>
+          {{ form.security_deposit(class="form-control", placeholder="e.g. 1000") }}
+          <div class="form-text small">100% Refundable</div>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label fw-bold small">Cleaning Fee (₹)</label>
+          {{ form.cleaning_fee(class="form-control", placeholder="e.g. 200") }}
+          <div class="form-text small">One-time fee</div>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label fw-bold small">GST / Tax (%)</label>
+          {{ form.tax_percentage(class="form-control", placeholder="e.g. 5") }}
+          <div class="form-text small">Statutory tax %</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cancellation & Rules -->
+    <div class="mb-4">
+      <div class="mb-3">
+        <label class="form-label fw-bold small">Cancellation & Refund Policy</label>
+        {{ form.cancellation_policy(class="form-control", placeholder="e.g. Free cancellation up to 24 hours before check-in") }}
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-bold small"><i class="bi bi-card-checklist text-primary me-1"></i>Short-Stay House Rules & Guest Instructions</label>
+        {{ form.short_stay_rules(class="form-control", rows="3", placeholder="e.g. Gates close at 11:00 PM. No loud music after 10:00 PM. Govt ID required at check-in.") }}
+      </div>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="pt-3 border-top d-flex justify-content-end gap-2">
+      <a href="{{ url_for('owner.properties') }}" class="btn btn-light rounded-pill px-4">Cancel</a>
+      <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold">
+        <i class="bi bi-check-circle-fill me-1"></i> Save Short-Stay Settings
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends 'owner/base_owner.html' %}
+
+{% block title %}Manage Visit Requests — PG Finder Bengaluru{% endblock %}
+
+{% block owner_content %}
+<div class="mb-4">
+  <h2 class="fw-bold mb-1">In-Person Visit Requests</h2>
+  <span class="text-secondary small">Coordinate showing your PG rooms to prospective tenants. Confirm or reschedule time slots.</span>
+</div>
+
+{% if visits %}
+  <div class="card border-0 rounded-4 shadow-sm bg-white overflow-hidden">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th>Customer</th>
+            <th>Property</th>
+            <th>Requested Date & Slot</th>
+            <th>Status</th>
+            <th>Outcome</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for vis in visits %}
+            <tr>
+              <td>
+                <strong class="text-dark d-block">{{ vis.customer.name }}</strong>
+                <a href="tel:{{ vis.customer.phone }}" class="small text-primary text-decoration-none fw-bold">
+                  <i class="bi bi-telephone-fill me-1"></i> {{ vis.customer.phone }}
+                </a>
+              </td>
+              <td>
+                <strong class="text-dark d-block">{{ vis.property.name }}</strong>
+                <span class="small text-muted">{{ vis.property.locality }}</span>
+              </td>
+              <td>
+                <div class="fw-bold text-dark">{{ vis.preferred_date.strftime('%d %b %Y') }}</div>
+                <div class="small text-secondary">{{ vis.preferred_time_slot }}</div>
+                {% if vis.status == 'rescheduled' and vis.rescheduled_date %}
+                  <div class="small text-primary fw-bold">Rescheduled to: {{ vis.rescheduled_date.strftime('%d %b %Y') }} ({{ vis.rescheduled_time_slot }})</div>
+                {% endif %}
+              </td>
+              <td>
+                <span class="status-pill status-{{ vis.status }}">{{ vis.status | capitalize }}</span>
+              </td>
+              <td>
+                {% if vis.visit_outcome %}
+                  <span class="badge bg-info-subtle text-info border p-2">{{ vis.visit_outcome | replace('_', ' ') | capitalize }}</span>
+                {% else %}
+                  <span class="small text-muted">Pending visit</span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-outline-primary dropdown-toggle rounded-pill px-3" type="button" data-bs-toggle="dropdown">
+                    Action
+                  </button>
+                  <div class="dropdown-menu dropdown-menu-end p-3 shadow-lg border-0 rounded-3" style="min-width: 280px;">
+                    <!-- Accept -->
+                    <form action="{{ url_for('owner.action_visit_request', visit_id=vis.id) }}" method="POST" class="mb-2">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="action" value="accept">
+                      <button type="submit" class="btn btn-sm btn-success w-100 rounded-pill fw-bold">
+                        <i class="bi bi-check-circle me-1"></i> Accept Visit
+                      </button>
+                    </form>
+
+                    <!-- Decline -->
+                    <form action="{{ url_for('owner.action_visit_request', visit_id=vis.id) }}" method="POST" class="mb-2">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="action" value="decline">
+                      <button type="submit" class="btn btn-sm btn-outline-danger w-100 rounded-pill">
+                        <i class="bi bi-x-circle me-1"></i> Decline
+                      </button>
+                    </form>
+
+                    <hr class="my-2">
+
+                    <!-- Record Outcome -->
+                    <form action="{{ url_for('owner.action_visit_request', visit_id=vis.id) }}" method="POST">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="action" value="record_outcome">
+                      <label class="small fw-bold text-muted mb-1">Record Outcome:</label>
+                      <select name="visit_outcome" class="form-select form-select-sm mb-1">
+                        <option value="moved_in">Tenant Moved In / Paid Deposit</option>
+                        <option value="considering">Still Considering</option>
+                        <option value="declined">Tenant Declined</option>
+                        <option value="no_show">No Show</option>
+                      </select>
+                      <button type="submit" class="btn btn-sm btn-primary w-100 rounded-pill">Save Outcome</button>
+                    </form>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% else %}
+  <div class="card border-0 rounded-4 p-5 text-center bg-white shadow-sm">
+    <i class="bi bi-calendar-event fs-1 text-slate-400 mb-2"></i>
+    <h5 class="fw-bold">No In-Person Visits Scheduled</h5>
+    <p class="text-secondary small">When customers request property visits, they will appear here so you can accept, decline, or reschedule.</p>
+  </div>
+{% endif %}
+{% endblock %}

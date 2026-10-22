@@ -1,0 +1,77 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Review Moderation — PG Finder Bengaluru{% endblock %}
+
+{% block admin_content %}
+<div class="mb-4">
+  <h2 class="fw-bold mb-1">Customer Review Moderation</h2>
+  <span class="text-secondary small">Prevent fake reviews, verify authentic stay durations, and protect platform reputation.</span>
+</div>
+
+{% if reviews %}
+  <div class="card border-0 rounded-4 shadow-sm bg-white overflow-hidden">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th>Property</th>
+            <th>Author</th>
+            <th>Ratings</th>
+            <th>Review Text</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for rev in reviews %}
+            <tr>
+              <td>
+                <strong class="text-dark">{{ rev.property.name }}</strong>
+                <div class="small text-muted">{{ rev.property.locality }}</div>
+              </td>
+              <td>
+                <strong class="text-dark">{{ rev.user.name }}</strong>
+                <div class="small text-muted">Stayed: {{ rev.stay_duration }}</div>
+              </td>
+              <td>
+                <div class="text-warning fw-bold">{{ rev.rating }} / 5 ⭐</div>
+                <div class="small text-muted" style="font-size:11px;">Clean: {{ rev.cleanliness_rating }} | Food: {{ rev.food_rating }} | Amen: {{ rev.amenities_rating }}</div>
+              </td>
+              <td style="max-width: 320px;">
+                <p class="small text-secondary mb-0 bg-light p-2 rounded">{{ rev.review_text }}</p>
+              </td>
+              <td>
+                <span class="status-pill status-{{ rev.status }}">{{ rev.status | capitalize }}</span>
+              </td>
+              <td>
+                {% if rev.status == 'pending' %}
+                  <div class="d-flex gap-1">
+                    <form action="{{ url_for('admin.action_review', review_id=rev.id) }}" method="POST">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="action" value="approve">
+                      <button type="submit" class="btn btn-sm btn-success rounded-pill px-2">Approve</button>
+                    </form>
+                    <form action="{{ url_for('admin.action_review', review_id=rev.id) }}" method="POST">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="action" value="reject">
+                      <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2">Reject</button>
+                    </form>
+                  </div>
+                {% else %}
+                  <span class="small text-muted">Moderated</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% else %}
+  <div class="card border-0 rounded-4 p-5 text-center bg-white shadow-sm">
+    <i class="bi bi-star fs-1 text-slate-400 mb-2"></i>
+    <h5 class="fw-bold">No Reviews Awaiting Moderation</h5>
+    <p class="text-secondary small">All resident reviews have been reviewed.</p>
+  </div>
+{% endif %}
+{% endblock %}

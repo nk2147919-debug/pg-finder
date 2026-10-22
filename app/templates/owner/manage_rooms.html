@@ -1,0 +1,162 @@
+{% extends 'owner/base_owner.html' %}
+
+{% block title %}Manage Rooms & Bed Inventory — {{ property.name }}{% endblock %}
+
+{% block owner_content %}
+<div class="mb-4">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb small mb-1">
+      <li class="breadcrumb-item"><a href="{{ url_for('owner.properties') }}">My Properties</a></li>
+      <li class="breadcrumb-item active">Manage Rooms</li>
+    </ol>
+  </nav>
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div>
+      <h2 class="fw-bold mb-1">Room Types & Bed Inventory</h2>
+      <span class="text-secondary small">Property: <strong>{{ property.name }}</strong> ({{ property.locality }})</span>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('owner.manage_food', property_id=property.id) }}" class="btn btn-outline-warning text-dark btn-sm rounded-pill px-3 fw-bold">
+        <i class="bi bi-cup-hot me-1"></i> Food Menu Schedule &rarr;
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Add New Room Option Form -->
+  <div class="col-lg-5">
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-4">
+      <h5 class="fw-bold mb-3"><i class="bi bi-plus-circle text-primary me-1"></i> Add Room Sharing Option</h5>
+
+      <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <div class="mb-3">
+          <label class="form-label fw-bold small">Sharing Type *</label>
+          {{ form.sharing_type(class="form-select") }}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold small">Room Description / Title *</label>
+          {{ form.title(class="form-control", placeholder="e.g. Spacious 2-Sharing with Study Desk") }}
+        </div>
+
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <label class="form-label fw-bold small">Monthly Rent (₹/bed) *</label>
+            {{ form.monthly_rent(class="form-control", placeholder="e.g. 11000") }}
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-bold small">Deposit (₹/bed) *</label>
+            {{ form.deposit_amount(class="form-control", placeholder="e.g. 11000") }}
+          </div>
+        </div>
+
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <label class="form-label fw-bold small">Total Beds in Category *</label>
+            {{ form.total_beds(class="form-control", placeholder="e.g. 10") }}
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-bold small">Occupied Beds *</label>
+            {{ form.occupied_beds(class="form-control", placeholder="e.g. 8") }}
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold small">Currently Vacant Beds *</label>
+          {{ form.vacant_beds(class="form-control", placeholder="e.g. 2") }}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold small">Available From Date *</label>
+          {{ form.availability_date(class="form-control", type="date") }}
+        </div>
+
+        <div class="mb-3 p-3 bg-light rounded-3">
+          <label class="fw-bold small d-block mb-2">Room Features Included</label>
+          <div class="form-check mb-1">
+            {{ form.has_ac(class="form-check-input") }}
+            <label class="form-check-label small" for="has_ac">Air Conditioner (AC)</label>
+          </div>
+          <div class="form-check mb-1">
+            {{ form.has_attached_bathroom(class="form-check-input") }}
+            <label class="form-check-label small" for="has_attached_bathroom">Attached Western Bathroom</label>
+          </div>
+          <div class="form-check">
+            {{ form.has_balcony(class="form-check-input") }}
+            <label class="form-check-label small" for="has_balcony">Private Balcony</label>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 fw-bold rounded-pill">
+          <i class="bi bi-check-lg me-1"></i> Save Room Option
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Existing Room Options List -->
+  <div class="col-lg-7">
+    <div class="card border-0 rounded-4 shadow-sm bg-white p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Active Room Categories</h5>
+        <span class="badge bg-success-subtle text-success border border-success p-2">
+          {{ property.total_vacant_beds }} Total Vacant Beds
+        </span>
+      </div>
+
+      {% if property.room_types %}
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead class="bg-light">
+              <tr>
+                <th>Sharing</th>
+                <th>Monthly Rent</th>
+                <th>Deposit</th>
+                <th>Bed Inventory</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for rt in property.room_types %}
+                <tr>
+                  <td>
+                    <strong class="text-dark d-block">{{ rt.sharing_label }}</strong>
+                    <span class="small text-muted">{{ rt.title }}</span>
+                    <div class="small mt-1">
+                      {% if rt.has_ac %}<span class="badge bg-primary-subtle text-primary">AC</span>{% endif %}
+                      {% if rt.has_attached_bathroom %}<span class="badge bg-light text-dark border">Bath</span>{% endif %}
+                      {% if rt.has_balcony %}<span class="badge bg-light text-dark border">Balcony</span>{% endif %}
+                    </div>
+                  </td>
+                  <td class="fw-bold text-dark">{{ rt.monthly_rent | inr }}</td>
+                  <td>{{ rt.deposit_amount | inr }}</td>
+                  <td>
+                    <span class="badge bg-success text-white">{{ rt.vacant_beds }} vacant</span>
+                    <div class="small text-muted">{{ rt.occupied_beds }}/{{ rt.total_beds }} filled</div>
+                  </td>
+                  <td>
+                    <form action="{{ url_for('owner.delete_room', property_id=property.id, room_id=rt.id) }}" method="POST" onsubmit="return confirm('Delete this room category?');">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Delete">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-4 text-muted">
+          <i class="bi bi-door-closed fs-1 text-slate-400 d-block mb-2"></i>
+          No room sharing categories added yet. Add your Single, Double or Triple sharing options using the form on the left.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign In — PG Finder Bengaluru{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      <div class="card border-0 rounded-4 shadow-lg p-4 p-md-5 bg-white">
+        <div class="text-center mb-4">
+          <div class="brand-icon-badge mx-auto mb-3" style="width:50px; height:50px; font-size:1.5rem;">
+            <i class="bi bi-person-fill"></i>
+          </div>
+          <h3 class="fw-bold mb-1">Welcome Back</h3>
+          <p class="text-secondary small">Sign in to manage your enquiries, saved PGs or listings</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
+          {{ form.hidden_tag() }}
+
+          <div class="mb-3">
+            <label class="form-label fw-bold small">Email Address</label>
+            {{ form.email(class="form-control form-control-lg", placeholder="name@example.com") }}
+            {% for error in form.email.errors %}
+              <div class="text-danger small mt-1">{{ error }}</div>
+            {% endfor %}
+          </div>
+
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="form-label fw-bold small mb-0">Password</label>
+              <a href="#" class="text-secondary small text-decoration-none">Forgot?</a>
+            </div>
+            {{ form.password(class="form-control form-control-lg", placeholder="••••••••") }}
+            {% for error in form.password.errors %}
+              <div class="text-danger small mt-1">{{ error }}</div>
+            {% endfor %}
+          </div>
+
+          <div class="mb-3 form-check">
+            {{ form.remember_me(class="form-check-input") }}
+            <label class="form-check-label small" for="remember_me">Keep me signed in</label>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold rounded-pill mb-3">
+            Sign In to PG Finder
+          </button>
+        </form>
+
+        <div class="bg-light p-3 rounded-3 text-center small text-secondary mb-3">
+          <strong>Demo Login Accounts:</strong><br>
+          <span class="d-block mt-1">👤 Customer: <code>rahul.tech@gmail.com</code> / <code>Customer@123</code></span>
+          <span class="d-block">🏢 Owner: <code>owner.suresh@gmail.com</code> / <code>Owner@123</code></span>
+          <span class="d-block">🛡️ Admin: <code>admin@pgfinder.in</code> / <code>Admin@123</code></span>
+        </div>
+
+        <div class="text-center small text-secondary">
+          Don't have an account? <a href="{{ url_for('auth.register') }}" class="fw-bold">Create account</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

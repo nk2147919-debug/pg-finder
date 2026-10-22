@@ -1,0 +1,309 @@
+{% extends 'base.html' %}
+
+{% block title %}Short Stay & Friends Stay in Bengaluru — PG Finder{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Header Banner -->
+  <div class="rounded-4 p-4 mb-4 text-white position-relative overflow-hidden shadow-sm" style="background: linear-gradient(135deg, #0284c7 0%, #0d9488 100%);">
+    <div class="row align-items-center">
+      <div class="col-lg-8">
+        <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-white bg-opacity-20 mb-2 small fw-bold">
+          <i class="bi bi-lightning-charge-fill text-warning"></i> Flexible Daily & Weekly Stays in Bengaluru
+        </div>
+        <h2 class="fw-bold mb-1">Short Stay & Friends Trip Accommodations</h2>
+        <p class="mb-0 text-white-50">
+          Book verified PGs for 1 night, 2–3 days, 1 week, 15 days, or custom durations. Travel solo or stay together with friends with complete price transparency.
+        </p>
+      </div>
+      <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+        <span class="badge bg-white text-dark px-3 py-2 fs-6 rounded-pill shadow-xs">
+          <i class="bi bi-patch-check-fill text-primary me-1"></i> {{ pagination.total }} Short-Stay Ready PGs
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Duration Quick Selectors -->
+  <div class="d-flex flex-wrap align-items-center gap-2 mb-4 p-3 bg-white rounded-4 border shadow-xs">
+    <span class="text-secondary small fw-bold me-2"><i class="bi bi-clock-history text-primary"></i> Popular Durations:</span>
+    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill duration-preset-btn" data-days="1">1 Night (Quick Stop)</button>
+    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill duration-preset-btn" data-days="2">2 Days (Weekend Trip)</button>
+    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill duration-preset-btn" data-days="3">3 Days (Long Weekend)</button>
+    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill duration-preset-btn" data-days="7">1 Week (7 Days)</button>
+    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill duration-preset-btn" data-days="15">15 Days (Sprint / Exam)</button>
+    <a href="{{ url_for('customer.search') }}" class="btn btn-sm btn-link text-decoration-none ms-auto text-secondary small">
+      <i class="bi bi-arrow-right-circle"></i> Switch to Monthly PG Search
+    </a>
+  </div>
+
+  <div class="row g-4">
+    <!-- Filter Sidebar (Col-lg-3) -->
+    <div class="col-lg-3">
+      <div class="filter-sidebar">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-sliders me-1 text-primary"></i> Search Filters</h5>
+          <a href="{{ url_for('customer.short_stay_search') }}" class="btn btn-link btn-sm text-danger p-0 text-decoration-none fw-bold">Reset</a>
+        </div>
+
+        <form action="{{ url_for('customer.short_stay_search') }}" method="GET" id="shortStayFilterForm">
+          <!-- Dates -->
+          <div class="filter-group">
+            <label class="filter-section-title"><i class="bi bi-calendar-event me-1 text-primary"></i> Check-in Date</label>
+            <input type="date" name="check_in" id="filter_check_in" class="form-control form-control-sm" value="{{ filters.get('check_in', '') }}">
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-section-title"><i class="bi bi-calendar-check me-1 text-primary"></i> Check-out Date</label>
+            <input type="date" name="check_out" id="filter_check_out" class="form-control form-control-sm" value="{{ filters.get('check_out', '') }}">
+          </div>
+
+          <!-- Guests Count (Friends Stay) -->
+          <div class="filter-group">
+            <label class="filter-section-title"><i class="bi bi-people me-1 text-primary"></i> Guests / Friends Count</label>
+            <select name="guests" id="filter_guests" class="form-select form-select-sm">
+              <option value="1" {% if filters.get('guests') == '1' %}selected{% endif %}>1 Guest (Solo Traveler)</option>
+              <option value="2" {% if filters.get('guests') == '2' %}selected{% endif %}>2 Guests (Pair / Friends)</option>
+              <option value="3" {% if filters.get('guests') == '3' %}selected{% endif %}>3 Guests (Group Stay)</option>
+              <option value="4" {% if filters.get('guests') == '4' %}selected{% endif %}>4 Guests (Group Stay)</option>
+              <option value="5" {% if filters.get('guests') == '5' %}selected{% endif %}>5+ Guests (Large Group)</option>
+            </select>
+          </div>
+
+          <!-- Locality -->
+          <div class="filter-group">
+            <label class="filter-section-title"><i class="bi bi-geo-alt me-1 text-primary"></i> Bengaluru Locality</label>
+            <select name="locality" class="form-select form-select-sm">
+              <option value="">All Bengaluru Areas</option>
+              {% for loc in popular_localities %}
+                <option value="{{ loc.name }}" {% if filters.get('locality') == loc.name %}selected{% endif %}>{{ loc.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Keyword -->
+          <div class="filter-group">
+            <label class="filter-section-title">Keyword / Tech Park</label>
+            <input type="text" name="q" class="form-control form-control-sm" placeholder="e.g. Manyata, Hebbal, Metro" value="{{ filters.get('q', '') }}">
+          </div>
+
+          <!-- Max Budget Per Night -->
+          <div class="filter-group">
+            <label class="filter-section-title"><i class="bi bi-currency-rupee me-1 text-primary"></i> Max Price / Night</label>
+            <select name="max_daily_rate" class="form-select form-select-sm">
+              <option value="">Any Price</option>
+              <option value="600" {% if filters.get('max_daily_rate') == '600' %}selected{% endif %}>Under ₹600 / night</option>
+              <option value="1000" {% if filters.get('max_daily_rate') == '1000' %}selected{% endif %}>Under ₹1,000 / night</option>
+              <option value="1500" {% if filters.get('max_daily_rate') == '1500' %}selected{% endif %}>Under ₹1,500 / night</option>
+              <option value="2500" {% if filters.get('max_daily_rate') == '2500' %}selected{% endif %}>Under ₹2,500 / night</option>
+            </select>
+          </div>
+
+          <!-- Gender Policy -->
+          <div class="filter-group">
+            <label class="filter-section-title">Stay Type</label>
+            <div class="form-check form-check-sm mb-1">
+              <input class="form-check-input" type="radio" name="gender" id="gender_all" value="" {% if not filters.get('gender') %}checked{% endif %}>
+              <label class="form-check-label small" for="gender_all">All Accommodations</label>
+            </div>
+            <div class="form-check form-check-sm mb-1">
+              <input class="form-check-input" type="radio" name="gender" id="gender_gents" value="gents" {% if filters.get('gender') == 'gents' %}checked{% endif %}>
+              <label class="form-check-label small" for="gender_gents">Gents / Boys Only</label>
+            </div>
+            <div class="form-check form-check-sm mb-1">
+              <input class="form-check-input" type="radio" name="gender" id="gender_ladies" value="ladies" {% if filters.get('gender') == 'ladies' %}checked{% endif %}>
+              <label class="form-check-label small" for="gender_ladies">Ladies / Girls Only</label>
+            </div>
+            <div class="form-check form-check-sm">
+              <input class="form-check-input" type="radio" name="gender" id="gender_unisex" value="unisex" {% if filters.get('gender') == 'unisex' %}checked{% endif %}>
+              <label class="form-check-label small" for="gender_unisex">Unisex / Coliving</label>
+            </div>
+          </div>
+
+          <!-- Food Availability -->
+          <div class="filter-group">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="food_included" id="food_included" value="1" {% if filters.get('food_included') == '1' %}checked{% endif %}>
+              <label class="form-check-label small fw-bold" for="food_included">
+                <i class="bi bi-cup-hot text-warning me-1"></i> Food Facilities Available
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-sm w-100 rounded-pill fw-bold">
+            <i class="bi bi-search me-1"></i> Apply Short-Stay Filters
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Results Grid (Col-lg-9) -->
+    <div class="col-lg-9">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h4 class="fw-bold mb-0">Verified Short-Stay Accommodations</h4>
+          <span class="text-secondary small">Showing {{ properties|length }} of {{ pagination.total }} properties accepting short & friends stays</span>
+        </div>
+      </div>
+
+      {% if properties %}
+        <div class="row g-4">
+          {% for prop in properties %}
+            {% set cfg = prop.short_stay_config %}
+            {% set fresh = get_freshness_status(prop) %}
+            <div class="col-md-6 col-xl-4">
+              <div class="property-card h-100 d-flex flex-column">
+                <div class="property-card-media">
+                  <img src="{{ prop.cover_image }}" alt="{{ prop.name }}" class="property-card-img" loading="lazy">
+                  <div class="card-top-badges">
+                    <span class="badge bg-dark bg-opacity-75 text-white rounded-pill px-2 py-1 small">
+                      <i class="bi bi-lightning-fill text-warning"></i> Short Stay
+                    </span>
+                    <button type="button" class="fav-btn-circle fav-btn-action" data-property-id="{{ prop.id }}">
+                      <i class="bi bi-heart"></i>
+                    </button>
+                  </div>
+                  <div class="card-bottom-badges">
+                    <span class="badge-gender badge-gender-{{ prop.gender_policy }}">{{ prop.gender_policy | capitalize }}</span>
+                    {% if fresh.verification.is_verified %}
+                      <span class="badge-verified"><i class="bi bi-patch-check-fill"></i> Verified PG</span>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="property-card-body d-flex flex-column flex-grow-1">
+                  <div class="property-card-locality">
+                    <i class="bi bi-geo-alt-fill"></i> {{ prop.locality }}
+                    {% if prop.metro_distance_km %}
+                      <span class="text-secondary small ms-auto">• {{ prop.metro_distance_km }}km metro</span>
+                    {% endif %}
+                  </div>
+
+                  <h5 class="property-card-title mb-1">
+                    <a href="{{ url_for('customer.property_detail', slug=prop.slug) }}">{{ prop.name }}</a>
+                  </h5>
+
+                  <!-- Short Stay Key Specs -->
+                  <div class="bg-light p-2 rounded-3 small text-secondary mb-2">
+                    <div class="d-flex justify-content-between mb-1">
+                      <span><i class="bi bi-people-fill text-primary me-1"></i> Permitted Guests:</span>
+                      <strong class="text-dark">Up to {{ cfg.max_guests_allowed if cfg else 4 }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                      <span><i class="bi bi-clock me-1 text-primary"></i> Min/Max Stay:</span>
+                      <span class="text-dark">{{ cfg.min_stay_days if cfg else 1 }} to {{ cfg.max_stay_days if cfg else 30 }} days</span>
+                    </div>
+                    {% if cfg and cfg.weekly_discount_percent > 0 %}
+                      <div class="d-flex justify-content-between text-success">
+                        <span><i class="bi bi-tag-fill me-1"></i> Weekly Discount:</span>
+                        <strong>{{ cfg.weekly_discount_percent }}% OFF (7+ days)</strong>
+                      </div>
+                    {% endif %}
+                  </div>
+
+                  <!-- Available Beds & Food -->
+                  <div class="d-flex gap-2 small text-muted mb-2">
+                    <span class="badge bg-success-subtle text-success">
+                      <i class="bi bi-door-open-fill me-1"></i> {{ prop.total_vacant_beds }} beds vacant
+                    </span>
+                    {% if prop.food_menu %}
+                      <span class="badge bg-warning-subtle text-dark">
+                        <i class="bi bi-cup-hot-fill me-1"></i> Food Available
+                      </span>
+                    {% endif %}
+                  </div>
+
+                  <!-- Footer Price & Book CTA -->
+                  <div class="property-card-footer mt-auto pt-2 border-top">
+                    <div class="price-container">
+                      <span class="price-sub">Per Night</span>
+                      <div class="price-main fs-5 text-primary">
+                        {{ cfg.daily_rate | inr if cfg else prop.starting_price | inr }}
+                        <span class="fs-7 text-muted">/ night</span>
+                      </div>
+                      {% if cfg and cfg.extra_guest_charge > 0 %}
+                        <div class="text-muted" style="font-size: 0.72rem;">
+                          +{{ cfg.extra_guest_charge | inr }}/extra guest
+                        </div>
+                      {% endif %}
+                    </div>
+
+                    <a href="{{ url_for('customer.property_detail', slug=prop.slug) }}#shortStayWidget" class="btn btn-primary btn-sm px-3 fw-bold rounded-pill">
+                      Book Stay
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+          <nav class="mt-4" aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+              {% if pagination.has_prev %}
+                <li class="page-item">
+                  <a class="page-link" href="{{ url_for('customer.short_stay_search', page=pagination.prev_num, **filters) }}">Previous</a>
+                </li>
+              {% endif %}
+              {% for p in range(1, pagination.pages + 1) %}
+                <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                  <a class="page-link" href="{{ url_for('customer.short_stay_search', page=p, **filters) }}">{{ p }}</a>
+                </li>
+              {% endfor %}
+              {% if pagination.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="{{ url_for('customer.short_stay_search', page=pagination.next_num, **filters) }}">Next</a>
+                </li>
+              {% endif %}
+            </ul>
+          </nav>
+        {% endif %}
+      {% else %}
+        <div class="card border-0 rounded-4 shadow-sm bg-white p-5 text-center">
+          <i class="bi bi-calendar-x fs-1 text-muted mb-3 d-block"></i>
+          <h4 class="fw-bold">No Short-Stay Accommodations Found</h4>
+          <p class="text-secondary small mb-3">
+            Try adjusting your dates, reducing the guest count, or clearing locality filters to discover more available PGs.
+          </p>
+          <div>
+            <a href="{{ url_for('customer.short_stay_search') }}" class="btn btn-primary rounded-pill px-4 fw-bold">
+              Clear All Filters
+            </a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const checkInInput = document.getElementById('filter_check_in');
+  const checkOutInput = document.getElementById('filter_check_out');
+  const filterForm = document.getElementById('shortStayFilterForm');
+
+  // Set minimum check-in date to today
+  const today = new Date().toISOString().split('T')[0];
+  if (checkInInput && !checkInInput.value) {
+    checkInInput.min = today;
+  }
+
+  // Duration preset buttons
+  document.querySelectorAll('.duration-preset-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const days = parseInt(this.getAttribute('data-days'));
+      const start = checkInInput.value ? new Date(checkInInput.value) : new Date();
+      if (!checkInInput.value) {
+        checkInInput.value = start.toISOString().split('T')[0];
+      }
+      const end = new Date(start);
+      end.setDate(end.getDate() + days);
+      checkOutInput.value = end.toISOString().split('T')[0];
+      filterForm.submit();
+    });
+  });
+});
+</script>
+{% endblock %}

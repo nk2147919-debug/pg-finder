@@ -1,0 +1,75 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}Reported Listings & Complaints — PG Finder Bengaluru{% endblock %}
+
+{% block admin_content %}
+<div class="mb-4">
+  <h2 class="fw-bold mb-1">Reported Listings & Complaints</h2>
+  <span class="text-secondary small">Investigate customer reports regarding misleading photos, hidden fees, or safety concerns.</span>
+</div>
+
+{% if complaints %}
+  <div class="card border-0 rounded-4 shadow-sm bg-white overflow-hidden">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th>Property</th>
+            <th>Reported By</th>
+            <th>Category</th>
+            <th>Explanation</th>
+            <th>Status</th>
+            <th>Resolve</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for comp in complaints %}
+            <tr>
+              <td>
+                <strong class="text-dark">{{ comp.property.name }}</strong>
+                <div class="small text-muted">{{ comp.property.locality }}</div>
+              </td>
+              <td>
+                <strong class="text-dark">{{ comp.reporter.name }}</strong>
+                <div class="small text-muted">{{ comp.reporter.email }}</div>
+              </td>
+              <td>
+                <span class="badge bg-danger-subtle text-danger border border-danger">
+                  {{ comp.category | replace('_', ' ') | capitalize }}
+                </span>
+              </td>
+              <td style="max-width: 300px;">
+                <p class="small text-secondary mb-1 bg-light p-2 rounded">{{ comp.description }}</p>
+                {% if comp.admin_notes %}
+                  <div class="small text-muted fst-italic">Resolution note: {{ comp.admin_notes }}</div>
+                {% endif %}
+              </td>
+              <td>
+                <span class="status-pill status-{{ comp.status }}">{{ comp.status | replace('_', ' ') | capitalize }}</span>
+              </td>
+              <td>
+                <form action="{{ url_for('admin.action_complaint', complaint_id=comp.id) }}" method="POST" class="d-flex flex-column gap-1">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <select name="status" class="form-select form-select-sm">
+                    <option value="under_review" {% if comp.status == 'under_review' %}selected{% endif %}>Under Review</option>
+                    <option value="resolved" {% if comp.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                    <option value="dismissed" {% if comp.status == 'dismissed' %}selected{% endif %}>Dismiss</option>
+                  </select>
+                  <input type="text" name="admin_notes" class="form-control form-control-sm" placeholder="Resolution note..." value="{{ comp.admin_notes or '' }}">
+                  <button type="submit" class="btn btn-sm btn-primary rounded-pill">Update</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% else %}
+  <div class="card border-0 rounded-4 p-5 text-center bg-white shadow-sm">
+    <i class="bi bi-shield-check fs-1 text-success mb-2"></i>
+    <h5 class="fw-bold">No Open Reports or Complaints</h5>
+    <p class="text-secondary small">All property listings are compliant with community standards.</p>
+  </div>
+{% endif %}
+{% endblock %}

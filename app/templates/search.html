@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+
+{% block title %}Search PG Accommodations in Bengaluru — PG Finder{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Top Search Bar Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">PG Accommodations in Bengaluru</h2>
+      <p class="text-secondary small mb-0">
+        Showing <strong>{{ pagination.total }}</strong> verified properties with live freshness & vacancy tracking
+      </p>
+    </div>
+
+    <!-- Quick Sort Dropdown -->
+    <div class="d-flex align-items-center gap-2">
+      <label class="text-secondary small fw-bold text-nowrap"><i class="bi bi-sort-down"></i> Sort By:</label>
+      <form id="sortForm" method="GET" class="d-inline">
+        {# Preserve all existing query parameters except sort_by and page #}
+        {% for key, val in filters.items() %}
+          {% if key not in ['sort_by', 'page'] %}
+            <input type="hidden" name="{{ key }}" value="{{ val }}">
+          {% endif %}
+        {% endfor %}
+        <select name="sort_by" class="form-select form-select-sm fw-bold rounded-pill" onchange="document.getElementById('sortForm').submit();">
+          <option value="freshness" {% if filters.get('sort_by') == 'freshness' %}selected{% endif %}>Recently Confirmed (Freshness)</option>
+          <option value="price_asc" {% if filters.get('sort_by') == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+          <option value="price_desc" {% if filters.get('sort_by') == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+          <option value="rating" {% if filters.get('sort_by') == 'rating' %}selected{% endif %}>Highest Rated</option>
+          <option value="recent" {% if filters.get('sort_by') == 'recent' %}selected{% endif %}>Newest Listings</option>
+        </select>
+      </form>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Filter Sidebar (Col-lg-3) -->
+    <div class="col-lg-3">
+      <div class="filter-sidebar">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-sliders me-1 text-primary"></i> Filters</h5>
+          <a href="{{ url_for('customer.search') }}" class="btn btn-link btn-sm text-danger p-0 text-decoration-none fw-bold">Reset All</a>
+        </div>
+
+        <form action="{{ url_for('customer.search') }}" method="GET" id="searchFilterForm">
+          <!-- Keyword / Search query -->
+          <div class="filter-group">
+            <label class="filter-section-title">Keyword / Landmark</label>
+            <input type="text" name="q" class="form-control form-control-sm" placeholder="e.g. Sony World, ITPL, Metro" value="{{ filters.get('q', '') }}">
+          </div>
+
+          <!-- Locality Filter -->
+          <div class="filter-group">
+            <label class="filter-section-title">Locality</label>
+            <select name="locality" class="form-select form-select-sm">
+              <option value="">All Bengaluru Localities</option>
+              {% for loc in popular_localities %}
+                <option value="{{ loc.name }}" {% if filters.get('locality') == loc.name %}selected{% endif %}>{{ loc.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Gender Policy -->
+          <div class="filter-group">
+            <label class="filter-section-title">Gender / Accommodation</label>
+            <div class="form-check mb-1">
+              <input class="form-check-input" type="radio" name="gender" id="gender_all" value="" {% if not filters.get('gender') %}checked{% endif %}>
+              <label class="form-check-label" for="gender_all">All (Any gender)</label>
+            </div>
+            <div class="form-check mb-1">
+              <input class="form-check-input" type="radio" name="gender" id="gender_gents" value="gents" {% if filters.get('gender') == 'gents' %}checked{% endif %}>
+              <label class="form-check-label" for="gender_gents">Gents / Boys PG</label>
+            </div>
+            <div class="form-check mb-1">
+              <input class="form-check-input" type="radio" name="gender" id="gender_ladies" value="ladies" {% if filters.get('gender') == 'ladies' %}checked{% endif %}>
+              <label class="form-check-label" for="gender_ladies">Ladies / Girls PG</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="gender" id="gender_unisex" value="unisex" {% if filters.get('gender') == 'unisex' %}checked{% endif %}>
+              <label class="form-check-label" for="gender_unisex">Coliving / Unisex</label>
+            </div>
+          </div>
+
+          <!-- Room Sharing Filter -->
+          <div class="filter-group">
+            <label class="filter-section-title">Room Sharing Type</label>
+            <div class="form-check mb-1">
+              <input class="form-check-input" type="checkbox" name="sharing" value="single" id="sh_single" {% if 'single' in filters.getlist('sharing') %}checked{% endif %}>
+              <label class="form-check-label" for="sh_single">Single (Private Room)</label>
+            </div>
+            <div class="form-check mb-1">
+              <input class="form-check-input" type="checkbox" name="sharing" value="double" id="sh_double" {% if 'double' in filters.getlist('sharing') %}checked{% endif %}>
+              <label class="form-check-label" for="sh_double">2 Sharing (Double)</label>
+            </div>
+            <div class="form-check mb-1">
+              <input class="form-check-input" type="checkbox" name="sharing" value="triple" id="sh_triple" {% if 'triple' in filters.getlist('sharing') %}checked{% endif %}>
+              <label class="form-check-label" for="sh_triple">3 Sharing (Triple)</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="sharing" value="four_plus" id="sh_four" {% if 'four_plus' in filters.getlist('sharing') %}checked{% endif %}>
+              <label class="form-check-label" for="sh_four">4+ Sharing</label>
+            </div>
+          </div>
+
+          <!-- Monthly Budget Filter -->
+          <div class="filter-group">
+            <label class="filter-section-title">Monthly Rent Budget (₹)</label>
+            <div class="row g-2">
+              <div class="col-6">
+                <input type="number" name="min_rent" class="form-control form-control-sm" placeholder="Min ₹" value="{{ filters.get('min_rent', '') }}">
+              </div>
+              <div class="col-6">
+                <input type="number" name="max_rent" class="form-control form-control-sm" placeholder="Max ₹" value="{{ filters.get('max_rent', '') }}">
+              </div>
+            </div>
+          </div>
+
+          <!-- Vacant Beds Toggle -->
+          <div class="filter-group">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="only_available" value="true" id="only_avail" {% if filters.get('only_available') %}checked{% endif %}>
+              <label class="form-check-label fw-bold text-success" for="only_avail">Only show available beds</label>
+            </div>
+          </div>
+
+          <!-- Food Preferences -->
+          <div class="filter-group">
+            <label class="filter-section-title">Food & Dining</label>
+            <select name="food_type" class="form-select form-select-sm mb-2">
+              <option value="">Any Food Option</option>
+              <option value="veg" {% if filters.get('food_type') == 'veg' %}selected{% endif %}>Pure Vegetarian</option>
+              <option value="both" {% if filters.get('food_type') == 'both' %}selected{% endif %}>Veg & Non-Veg</option>
+            </select>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="food_included" value="true" id="food_inc" {% if filters.get('food_included') %}checked{% endif %}>
+              <label class="form-check-label" for="food_inc">Food included in rent</label>
+            </div>
+          </div>
+
+          <!-- Room Amenities & Features -->
+          <div class="filter-group">
+            <label class="filter-section-title">Key Amenities</label>
+            <div class="form-check mb-1">
+              <input class="form-check-input" type="checkbox" name="ac" value="true" id="amen_ac" {% if filters.get('ac') %}checked{% endif %}>
+              <label class="form-check-label" for="amen_ac">Air Conditioner (AC)</label>
+            </div>
+            <div class="form-check mb-1">
+              <input class="form-check-input" type="checkbox" name="attached_bath" value="true" id="amen_bath" {% if filters.get('attached_bath') %}checked{% endif %}>
+              <label class="form-check-label" for="amen_bath">Attached Bathroom</label>
+            </div>
+            <div class="form-check mb-1">
+              <input class="form-check-input" type="checkbox" name="amenities" value="wifi" id="amen_wifi" {% if 'wifi' in filters.getlist('amenities') %}checked{% endif %}>
+              <label class="form-check-label" for="amen_wifi">High-Speed Wi-Fi</label>
+            </div>
+            <div class="form-check mb-1">
+              <input class="form-check-input" type="checkbox" name="amenities" value="power-backup" id="amen_power" {% if 'power-backup' in filters.getlist('amenities') %}checked{% endif %}>
+              <label class="form-check-label" for="amen_power">Power Backup</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="amenities" value="laundry" id="amen_laundry" {% if 'laundry' in filters.getlist('amenities') %}checked{% endif %}>
+              <label class="form-check-label" for="amen_laundry">Washing Machine / Laundry</label>
+            </div>
+          </div>
+
+          <!-- In-House Gym Filter -->
+          <div class="filter-group">
+            <label class="filter-section-title"><i class="bi bi-dumbbell text-success me-1"></i>In-House Gym</label>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="has_gym" value="true" id="filt_gym"
+                     {% if filters.get('has_gym') %}checked{% endif %}>
+              <label class="form-check-label fw-bold text-success" for="filt_gym">PGs with In-House Gym</label>
+            </div>
+            <div class="form-text small mt-1">Only shows PGs with a confirmed gym <strong>inside the building</strong>.</div>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 fw-bold rounded-pill">
+            <i class="bi bi-funnel-fill me-1"></i> Apply Filters
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Properties Grid (Col-lg-9) -->
+    <div class="col-lg-9">
+      {% if properties %}
+        <div class="row g-4">
+          {% for prop in properties %}
+            {% set fresh = get_freshness_status(prop) %}
+            <div class="col-md-6 col-xl-4">
+              <div class="property-card">
+                <div class="property-card-media">
+                  <img src="{{ prop.cover_image }}" alt="{{ prop.name }}" class="property-card-img" loading="lazy">
+                  <div class="card-top-badges">
+                    <span class="{{ fresh.availability.badge_class }}">
+                      <i class="bi bi-clock-history"></i> {{ fresh.availability.label }}
+                    </span>
+                    <button type="button" class="fav-btn-circle fav-btn-action" data-property-id="{{ prop.id }}">
+                      <i class="bi bi-heart"></i>
+                    </button>
+                  </div>
+                  <div class="card-bottom-badges">
+                    <span class="badge-gender badge-gender-{{ prop.gender_policy }}">{{ prop.gender_policy | capitalize }}</span>
+                    {% if fresh.verification.is_verified %}
+                      <span class="badge-verified"><i class="bi bi-patch-check-fill"></i> Verified</span>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="property-card-body">
+                  <div class="property-card-locality">
+                    <i class="bi bi-geo-alt-fill"></i> {{ prop.locality }}
+                  </div>
+
+                  <h4 class="property-card-title">
+                    <a href="{{ url_for('customer.property_detail', slug=prop.slug) }}">{{ prop.name }}</a>
+                  </h4>
+
+                  <div class="property-meta-row">
+                    <span class="vacant-beds-pill {% if prop.total_vacant_beds == 0 %}zero{% endif %}">
+                      <i class="bi bi-person-fill"></i> {{ prop.total_vacant_beds }} beds vacant
+                    </span>
+                    {% if prop.average_rating %}
+                      <span class="text-warning fw-bold">
+                        <i class="bi bi-star-fill"></i> {{ prop.average_rating }}
+                      </span>
+                    {% endif %}
+                  </div>
+
+                  <div class="sharing-tags-wrap">
+                    {% for st in prop.sharing_types %}
+                      <span class="sharing-tag">{{ st | capitalize }}</span>
+                    {% endfor %}
+                    {% if prop.has_gym %}
+                      <span class="sharing-tag" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border-color:#10b981;">
+                        <i class="bi bi-dumbbell me-1"></i>In-House Gym
+                      </span>
+                    {% endif %}
+                  </div>
+
+                  <div class="property-card-footer mt-auto">
+                    <div class="price-container">
+                      <span class="price-sub">Starts From</span>
+                      <div class="price-main">{{ prop.starting_price | inr }} <span>/ mo</span></div>
+                    </div>
+                    <div class="d-flex gap-1">
+                      <button type="button" class="btn btn-outline-secondary btn-sm px-2" onclick="addToCompare({{ prop.id }})" title="Compare">
+                        <i class="bi bi-arrow-left-right"></i>
+                      </button>
+                      <a href="{{ url_for('customer.property_detail', slug=prop.slug) }}" class="btn btn-primary btn-sm px-3 fw-bold">
+                        Details
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <!-- Pagination Controls -->
+        {% if pagination.pages > 1 %}
+          <nav class="mt-5 d-flex justify-content-center">
+            <ul class="pagination">
+              {% if pagination.has_prev %}
+                <li class="page-item">
+                  <a class="page-link" href="{{ url_for('customer.search', page=pagination.prev_num, **filters) }}">Previous</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Previous</span></li>
+              {% endif %}
+
+              {% for p in range(1, pagination.pages + 1) %}
+                <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                  <a class="page-link" href="{{ url_for('customer.search', page=p, **filters) }}">{{ p }}</a>
+                </li>
+              {% endfor %}
+
+              {% if pagination.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="{{ url_for('customer.search', page=pagination.next_num, **filters) }}">Next</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">Next</span></li>
+              {% endif %}
+            </ul>
+          </nav>
+        {% endif %}
+
+      {% else %}
+        <!-- Empty Results Message -->
+        <div class="card border-0 rounded-4 p-5 text-center bg-white shadow-sm my-4">
+          <div class="brand-icon-badge mx-auto mb-3" style="width:70px; height:70px; font-size:2rem; background:var(--warning-subtle); color:var(--warning-amber);">
+            <i class="bi bi-search"></i>
+          </div>
+          <h4 class="fw-bold">No PG Accommodations Found</h4>
+          <p class="text-secondary mx-auto" style="max-width: 480px;">
+            We couldn't find any approved properties matching your current filter criteria. Try adjusting your budget, clearing selected amenities, or browsing all Bengaluru localities.
+          </p>
+          <div>
+            <a href="{{ url_for('customer.search') }}" class="btn btn-primary rounded-pill px-4 fw-bold">
+              <i class="bi bi-arrow-counterclockwise me-1"></i> Clear All Filters
+            </a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

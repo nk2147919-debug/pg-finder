@@ -1,0 +1,86 @@
+{% extends 'owner/base_owner.html' %}
+
+{% block title %}Property Performance & Analytics — PG Finder Bengaluru{% endblock %}
+
+{% block owner_content %}
+<div class="mb-4">
+  <h2 class="fw-bold mb-1">Performance & Conversion Analytics</h2>
+  <span class="text-secondary small">Track tenant search impressions, page views, and enquiry conversion rates for your listings.</span>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon primary"><i class="bi bi-eye"></i></div>
+      <div>
+        <div class="stat-number">{{ total_views }}</div>
+        <div class="stat-label">Total Listing Views</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon emerald"><i class="bi bi-chat-left-dots"></i></div>
+      <div>
+        <div class="stat-number">{{ enquiries_count }}</div>
+        <div class="stat-label">Enquiries Received</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon amber"><i class="bi bi-calendar2-check"></i></div>
+      <div>
+        <div class="stat-number">{{ visits_count }}</div>
+        <div class="stat-label">Visits Scheduled</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon rose"><i class="bi bi-lightning-charge"></i></div>
+      <div>
+        <div class="stat-number">{{ conversion_rate }}%</div>
+        <div class="stat-label">Conversion Rate</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 rounded-4 shadow-sm bg-white p-4">
+  <h5 class="fw-bold mb-3">Listing Performance Breakdown</h5>
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead class="bg-light">
+        <tr>
+          <th>Property</th>
+          <th>Locality</th>
+          <th>Views</th>
+          <th>Enquiries</th>
+          <th>Vacant Beds</th>
+          <th>Freshness Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in properties %}
+          {% set f = get_freshness_status(p) %}
+          <tr>
+            <td>
+              <strong class="text-dark">{{ p.name }}</strong>
+            </td>
+            <td>{{ p.locality }}</td>
+            <td class="fw-bold">{{ p.views_count or 0 }}</td>
+            <td>{{ p.enquiries|length }}</td>
+            <td>
+              <span class="badge bg-success text-white">{{ p.total_vacant_beds }} beds</span>
+            </td>
+            <td>
+              <span class="{{ f.availability.badge_class }}">{{ f.availability.label }}</span>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
